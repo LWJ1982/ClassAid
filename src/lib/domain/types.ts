@@ -215,6 +215,44 @@ export interface AuditEvent {
   details: string;
 }
 
+// Adaptive Learning — Comprehension Checkpoints
+export type CheckpointApprovalStatus = 'auto_generated' | 'approved' | 'rejected' | 'edited';
+
+export interface CheckpointQuestion {
+  id: string;
+  activityId: string;
+  moduleVersionId: string;
+  questionText: string;
+  options: string[];
+  correctAnswer: string;
+  explanation: string;
+  failureHint: string; // What to re-read when wrong
+  approvalStatus: CheckpointApprovalStatus;
+  approvedBy: string | null;
+  approvedAt: string | null;
+  generatedAt: string;
+  minimumReadSeconds: number; // Minimum time before checkpoint appears
+}
+
+export interface StepEngagement {
+  activityId: string;
+  learnerId: string;
+  timeSpentSeconds: number;
+  checkpointAttempts: number;
+  passed: boolean;
+  firstAttemptCorrect: boolean;
+}
+
+export interface StepFriction {
+  activityId: string;
+  activityTitle: string;
+  stepNumber: number;
+  totalAttempts: number;
+  firstAttemptPassRate: number;
+  averageRetries: number;
+  averageTimeSpent: number;
+}
+
 // Demo user
 export interface DemoUser {
   id: string;

@@ -10,10 +10,11 @@ import { Assessment } from "./learner/assessment";
 import { ReadinessReport } from "./learner/readiness-report";
 import { InstructorDashboard } from "./instructor/dashboard";
 import { ModuleConfig } from "./instructor/module-config";
+import { CheckpointApproval } from "./instructor/checkpoint-approval";
 import { AdminRegistry } from "./admin/registry";
 
 export type LearnerView = "dashboard" | "overview" | "activity" | "coach" | "assessment" | "report";
-export type InstructorView = "insights" | "configure";
+export type InstructorView = "insights" | "configure" | "checkpoints";
 
 export function MainRouter() {
   const { role } = useApp();
@@ -45,11 +46,22 @@ export function MainRouter() {
           >
             &#x2699;&#xFE0F; Module Configuration
           </button>
+          <button
+            onClick={() => setInstructorView("checkpoints")}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              instructorView === "checkpoints"
+                ? "bg-blue-50 text-blue-700 shadow-sm"
+                : "text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            &#x2705; Checkpoint Approval
+          </button>
         </div>
 
         {/* Instructor content */}
         {instructorView === "insights" && <InstructorDashboard />}
         {instructorView === "configure" && <ModuleConfig />}
+        {instructorView === "checkpoints" && <CheckpointApproval />}
       </div>
     );
   }

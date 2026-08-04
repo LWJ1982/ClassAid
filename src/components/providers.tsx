@@ -1,8 +1,8 @@
 "use client";
 
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
-import type { Role, DemoUser, ReadinessResult, AttemptAnswer, Competency, AssessmentQuestion, GuidedActivity } from "@/lib/domain/types";
-import { demoUsers, competencies as seedCompetencies, questions as seedQuestions, activities as seedActivities } from "@/lib/data/seed";
+import type { Role, DemoUser, ReadinessResult, AttemptAnswer, Competency, AssessmentQuestion, GuidedActivity, CheckpointQuestion, CheckpointApprovalStatus } from "@/lib/domain/types";
+import { demoUsers, competencies as seedCompetencies, questions as seedQuestions, activities as seedActivities, checkpointQuestions as seedCheckpoints } from "@/lib/data/seed";
 
 // Module configuration state managed by instructor
 export interface ModuleConfig {
@@ -10,6 +10,7 @@ export interface ModuleConfig {
   competencies: Competency[];
   questions: AssessmentQuestion[];
   activities: GuidedActivity[];
+  checkpoints: CheckpointQuestion[];
 }
 
 interface AppState {
@@ -34,6 +35,9 @@ interface AppState {
   updateCompetency: (competencyId: string, updates: Partial<Competency>) => void;
   updateQuestion: (questionId: string, updates: Partial<AssessmentQuestion>) => void;
   updateActivity: (activityId: string, updates: Partial<GuidedActivity>) => void;
+  updateCheckpoint: (checkpointId: string, updates: Partial<CheckpointQuestion>) => void;
+  approveCheckpoint: (checkpointId: string) => void;
+  rejectCheckpoint: (checkpointId: string) => void;
   resetConfig: () => void;
 }
 
@@ -45,6 +49,7 @@ function getInitialConfig(): ModuleConfig {
     competencies: JSON.parse(JSON.stringify(seedCompetencies)),
     questions: JSON.parse(JSON.stringify(seedQuestions)),
     activities: JSON.parse(JSON.stringify(seedActivities)),
+    checkpoints: JSON.parse(JSON.stringify(seedCheckpoints)),
   };
 }
 
@@ -109,6 +114,37 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setModuleConfig(getInitialConfig());
   }, []);
 
+  const updateCheckpoint = useCallback((checkpointId: string, updates: Partial<CheckpointQuestion>) => {
+    setModuleConfig((prev) => ({
+      ...prev,
+      checkpoints: prev.checkpoints.map((cp) =>
+        cp.id === checkpointId ? { ...cp, ...updates } : cp
+      ),
+    }));
+  }, []);
+
+  const approveCheckpoint = useCallback((checkpointId: string) => {
+    setModuleConfig((prev) => ({
+      ...prev,
+      checkpoints: prev.checkpoints.map((cp) =>
+        cp.id === checkpointId
+          ? { ...cp, approvalStatus: 'approved' as CheckpointApprovalStatus, approvedBy: 'user-instructor-1', approvedAt: new Date().toISOString() }
+          : cp
+      ),
+    }));
+  }, []);
+
+  const rejectCheckpoint = useCallback((checkpointId: string) => {
+    setModuleConfig((prev) => ({
+      ...prev,
+      checkpoints: prev.checkpoints.map((cp) =>
+        cp.id === checkpointId
+          ? { ...cp, approvalStatus: 'rejected' as CheckpointApprovalStatus }
+          : cp
+      ),
+    }));
+  }, []);
+
   return (
     <AppContext.Provider
       value={{
@@ -131,6 +167,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         updateCompetency,
         updateQuestion,
         updateActivity,
+        updateCheckpoint,
+        approveCheckpoint,
+        rejectCheckpoint,
         resetConfig,
       }}
     >

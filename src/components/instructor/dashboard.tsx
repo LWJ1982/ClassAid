@@ -1,6 +1,6 @@
 "use client";
 
-import { cohortMetrics, misconceptions, interventionList } from "@/lib/data/seed";
+import { cohortMetrics, misconceptions, interventionList, stepFrictionData } from "@/lib/data/seed";
 import { useApp } from "../providers";
 
 export function InstructorDashboard() {
@@ -125,6 +125,60 @@ export function InstructorDashboard() {
               ))}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* Step Friction Analysis */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+        <h2 className="text-lg font-semibold text-slate-900 mb-2">Activity Step Friction</h2>
+        <p className="text-sm text-slate-500 mb-4">
+          Which guided activity steps cause learners to struggle. High retry rates indicate content that needs clarification or a poorly worded checkpoint.
+        </p>
+        <div className="space-y-3">
+          {stepFrictionData
+            .sort((a, b) => a.firstAttemptPassRate - b.firstAttemptPassRate)
+            .map((step) => {
+              const frictionLevel = step.firstAttemptPassRate < 0.6 ? "high" : step.firstAttemptPassRate < 0.75 ? "medium" : "low";
+              return (
+                <div key={step.activityId} className={`p-4 rounded-lg border ${
+                  frictionLevel === "high" ? "bg-red-50 border-red-200" :
+                  frictionLevel === "medium" ? "bg-amber-50 border-amber-200" :
+                  "bg-slate-50 border-slate-200"
+                }`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-slate-400">Step {step.stepNumber}</span>
+                      <span className="text-sm font-medium text-slate-900">{step.activityTitle}</span>
+                      {frictionLevel === "high" && (
+                        <span className="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-medium">High Friction</span>
+                      )}
+                    </div>
+                    <span className={`text-sm font-bold ${
+                      frictionLevel === "high" ? "text-red-600" :
+                      frictionLevel === "medium" ? "text-amber-600" :
+                      "text-green-600"
+                    }`}>
+                      {Math.round(step.firstAttemptPassRate * 100)}% first-pass
+                    </span>
+                  </div>
+                  <div className="w-full bg-slate-200 rounded-full h-2 mb-2">
+                    <div
+                      className={`h-2 rounded-full ${
+                        frictionLevel === "high" ? "bg-red-500" :
+                        frictionLevel === "medium" ? "bg-amber-500" :
+                        "bg-green-500"
+                      }`}
+                      style={{ width: `${Math.round(step.firstAttemptPassRate * 100)}%` }}
+                    />
+                  </div>
+                  <div className="flex gap-4 text-xs text-slate-500">
+                    <span>Avg retries: <strong>{step.averageRetries.toFixed(1)}</strong></span>
+                    <span>Avg time: <strong>{step.averageTimeSpent}s</strong></span>
+                    <span>Total attempts: <strong>{step.totalAttempts}</strong></span>
+                  </div>
+                </div>
+              );
+            })}
         </div>
       </div>
     </div>
