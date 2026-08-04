@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useApp } from "./providers";
 import { LearnerDashboard } from "./learner/dashboard";
 import { ModuleOverview } from "./learner/module-overview";
@@ -17,9 +17,16 @@ export type LearnerView = "dashboard" | "overview" | "activity" | "coach" | "ass
 export type InstructorView = "insights" | "configure" | "checkpoints";
 
 export function MainRouter() {
-  const { role } = useApp();
+  const { role, assessmentSubmitted, readinessResult } = useApp();
   const [learnerView, setLearnerView] = useState<LearnerView>("dashboard");
   const [instructorView, setInstructorView] = useState<InstructorView>("insights");
+
+  // If assessment was submitted and there's a result, default to report view
+  useEffect(() => {
+    if (assessmentSubmitted && readinessResult && learnerView === "dashboard") {
+      // Don't auto-redirect, let user choose
+    }
+  }, [assessmentSubmitted, readinessResult, learnerView]);
 
   if (role === "instructor") {
     return (

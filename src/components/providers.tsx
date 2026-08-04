@@ -1,8 +1,9 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
 import type { Role, DemoUser, ReadinessResult, AttemptAnswer, Competency, AssessmentQuestion, GuidedActivity, CheckpointQuestion, CheckpointApprovalStatus } from "@/lib/domain/types";
 import { demoUsers, competencies as seedCompetencies, questions as seedQuestions, activities as seedActivities, checkpointQuestions as seedCheckpoints } from "@/lib/data/seed";
+import { saveState, loadState, clearState } from "@/lib/persistence";
 
 // Module configuration state managed by instructor
 export interface ModuleConfig {
@@ -39,6 +40,9 @@ interface AppState {
   approveCheckpoint: (checkpointId: string) => void;
   rejectCheckpoint: (checkpointId: string) => void;
   resetConfig: () => void;
+  // Demo controls
+  resetDemo: () => void;
+  hydrated: boolean;
 }
 
 const AppContext = createContext<AppState | null>(null);
@@ -54,13 +58,60 @@ function getInitialConfig(): ModuleConfig {
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [role, setRoleState] = useState<Role>("learner");
-  const [activityProgress, setActivityProgress] = useState(0);
-  const [assessmentAnswers, setAssessmentAnswersState] = useState<Record<string, string>>({});
-  const [readinessResult, setReadinessResult] = useState<ReadinessResult | null>(null);
-  const [attemptAnswers, setAttemptAnswers] = useState<AttemptAnswer[]>([]);
-  const [assessmentSubmitted, setAssessmentSubmitted] = useState(false);
-  const [moduleConfig, setModuleConfig] = useState<ModuleConfig>(getInitialConfig);
+  const [hydrated, setHydrated] = useState(false);
+  const [role, setRoleState] = useState<Role>(() => {
+    if (typeof window === "undefined") return "learner";
+    const saved = loadState();
+    return (saved?.role as Role) ?? "learner";
+  });
+  const [activityProgress, setActivityProgress] = useState(() => {
+    if (typeof window === "undefined") return 0;
+    const saved = loadState();
+    return saved?.activityProgress ?? 0;
+  });
+  const [assessmentAnswers, setAssessmentAnswersState] = useState<Record<string, string>>(() => {
+    if (typeof window === "undefined") return {};
+    const saved = loadState();
+    return (saved?.assessmentAnswers as Record<string, string>) ?? {};
+  });
+  const [readinessResult, setReadinessResult] = useState<ReadinessResult | null>(() => {
+    if (typeof window === "undefined") return null;
+    const saved = loadState();
+    return (saved?.readinessResult as ReadinessResult) ?? null;
+  });
+  const [attemptAnswers, setAttemptAnswers] = useState<AttemptAnswer[]>(() => {
+    if (typeof window === "undefined") return [];
+    const saved = loadState();
+    return (saved?.attemptAnswers as AttemptAnswer[]) ?? [];
+  });
+  const [assessmentSubmitted, setAssessmentSubmitted] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const saved = loadState();
+    return saved?.assessmentSubmitted ?? false;
+  });
+  const [moduleConfig, setModuleConfig] = useState<ModuleConfig>(() => {
+    if (typeof window === "undefined") return getInitialConfig();
+    const saved = loadState();
+    return (saved?.moduleConfig as ModuleConfig) ?? getInitialConfig();
+  });
+
+  // Mark hydrated after first render — suppress lint: this is the canonical hydration pattern
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { setHydrated(true); }, []);
+
+  // Persist state changes
+  useEffect(() => {
+    if (!hydrated) return;
+    saveState({
+      role,
+      activityProgress,
+      assessmentAnswers,
+      assessmentSubmitted,
+      readinessResult,
+      attemptAnswers,
+      moduleConfig,
+    });
+  }, [hydrated, role, activityProgress, assessmentAnswers, assessmentSubmitted, readinessResult, attemptAnswers, moduleConfig]);
 
   const currentUser = demoUsers.find((u) => u.role === role) ?? demoUsers[0];
 
@@ -145,6 +196,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const resetDemo = useCallback(() => {
+    clearState();
+    setRoleState("learner");
+    setActivityProgress(0);
+    setAssessmentAnswersState({});
+    setReadinessResult(null);
+    setAttemptAnswers([]);
+    setAssessmentSubmitted(false);
+    setModuleConfig(getInitialConfig());
+  }, []);
+
   return (
     <AppContext.Provider
       value={{
@@ -171,6 +233,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         approveCheckpoint,
         rejectCheckpoint,
         resetConfig,
+        resetDemo,
+        hydrated,
       }}
     >
       {children}
