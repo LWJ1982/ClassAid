@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { questions, competencies } from "@/lib/data/seed";
 import { calculateReadiness } from "@/lib/engine/readiness-engine";
 import { useApp } from "../providers";
 import type { AttemptAnswer } from "@/lib/domain/types";
@@ -12,7 +11,9 @@ interface Props {
 }
 
 export function Assessment({ onComplete, onBack }: Props) {
-  const { assessmentAnswers, setAssessmentAnswer, setReadinessResult, setAttemptAnswers, setAssessmentSubmitted } = useApp();
+  const { assessmentAnswers, setAssessmentAnswer, setReadinessResult, setAttemptAnswers, setAssessmentSubmitted, moduleConfig } = useApp();
+  const questions = moduleConfig.questions;
+  const competencies = moduleConfig.competencies;
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [showReview, setShowReview] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -53,7 +54,7 @@ export function Assessment({ onComplete, onBack }: Props) {
           questions,
           answers: attemptAnswers,
           competencies,
-          overallThreshold: 0.8,
+          overallThreshold: moduleConfig.overallThreshold,
         });
 
         setAttemptAnswers(attemptAnswers);

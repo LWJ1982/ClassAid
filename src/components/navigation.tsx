@@ -38,9 +38,14 @@ export function Navigation() {
               </>
             )}
             {role === "instructor" && (
-              <Link href="/insights" className="text-sm text-slate-600 hover:text-blue-600 transition-colors">
-                Cohort Insights
-              </Link>
+              <>
+                <Link href="/insights" className="text-sm text-slate-600 hover:text-blue-600 transition-colors">
+                  Cohort Insights
+                </Link>
+                <Link href="/configure" className="text-sm text-slate-600 hover:text-blue-600 transition-colors">
+                  Configure
+                </Link>
+              </>
             )}
             {role === "admin" && (
               <Link href="/registry" className="text-sm text-slate-600 hover:text-blue-600 transition-colors">

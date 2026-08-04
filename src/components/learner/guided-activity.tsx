@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { activities, competencies } from "@/lib/data/seed";
+import { useApp } from "../providers";
 
 interface Props {
   onComplete: () => void;
@@ -9,6 +9,9 @@ interface Props {
 }
 
 export function GuidedActivity({ onComplete, onBack }: Props) {
+  const { moduleConfig } = useApp();
+  const activities = moduleConfig.activities;
+  const competencies = moduleConfig.competencies;
   const [currentStep, setCurrentStep] = useState(0);
   const activity = activities[currentStep];
   const linkedCompetency = competencies.find((c) => c.id === activity.linkedCompetencyId);

@@ -1,7 +1,6 @@
 "use client";
 
 import { useApp } from "../providers";
-import { questions } from "@/lib/data/seed";
 
 interface Props {
   onRetry: () => void;
@@ -9,7 +8,8 @@ interface Props {
 }
 
 export function ReadinessReport({ onRetry, onBackToDashboard }: Props) {
-  const { readinessResult, attemptAnswers, resetAssessment } = useApp();
+  const { readinessResult, attemptAnswers, resetAssessment, moduleConfig } = useApp();
+  const questions = moduleConfig.questions;
 
   if (!readinessResult) {
     return (

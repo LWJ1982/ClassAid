@@ -1,8 +1,16 @@
 "use client";
 
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
-import type { Role, DemoUser, ReadinessResult, AttemptAnswer } from "@/lib/domain/types";
-import { demoUsers } from "@/lib/data/seed";
+import type { Role, DemoUser, ReadinessResult, AttemptAnswer, Competency, AssessmentQuestion, GuidedActivity } from "@/lib/domain/types";
+import { demoUsers, competencies as seedCompetencies, questions as seedQuestions, activities as seedActivities } from "@/lib/data/seed";
+
+// Module configuration state managed by instructor
+export interface ModuleConfig {
+  overallThreshold: number;
+  competencies: Competency[];
+  questions: AssessmentQuestion[];
+  activities: GuidedActivity[];
+}
 
 interface AppState {
   currentUser: DemoUser;
@@ -20,9 +28,25 @@ interface AppState {
   setAttemptAnswers: (answers: AttemptAnswer[]) => void;
   assessmentSubmitted: boolean;
   setAssessmentSubmitted: (v: boolean) => void;
+  // Instructor module configuration
+  moduleConfig: ModuleConfig;
+  updateOverallThreshold: (threshold: number) => void;
+  updateCompetency: (competencyId: string, updates: Partial<Competency>) => void;
+  updateQuestion: (questionId: string, updates: Partial<AssessmentQuestion>) => void;
+  updateActivity: (activityId: string, updates: Partial<GuidedActivity>) => void;
+  resetConfig: () => void;
 }
 
 const AppContext = createContext<AppState | null>(null);
+
+function getInitialConfig(): ModuleConfig {
+  return {
+    overallThreshold: 0.8,
+    competencies: JSON.parse(JSON.stringify(seedCompetencies)),
+    questions: JSON.parse(JSON.stringify(seedQuestions)),
+    activities: JSON.parse(JSON.stringify(seedActivities)),
+  };
+}
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [role, setRoleState] = useState<Role>("learner");
@@ -31,6 +55,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [readinessResult, setReadinessResult] = useState<ReadinessResult | null>(null);
   const [attemptAnswers, setAttemptAnswers] = useState<AttemptAnswer[]>([]);
   const [assessmentSubmitted, setAssessmentSubmitted] = useState(false);
+  const [moduleConfig, setModuleConfig] = useState<ModuleConfig>(getInitialConfig);
 
   const currentUser = demoUsers.find((u) => u.role === role) ?? demoUsers[0];
 
@@ -47,6 +72,41 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setReadinessResult(null);
     setAttemptAnswers([]);
     setAssessmentSubmitted(false);
+  }, []);
+
+  const updateOverallThreshold = useCallback((threshold: number) => {
+    setModuleConfig((prev) => ({ ...prev, overallThreshold: threshold }));
+  }, []);
+
+  const updateCompetency = useCallback((competencyId: string, updates: Partial<Competency>) => {
+    setModuleConfig((prev) => ({
+      ...prev,
+      competencies: prev.competencies.map((c) =>
+        c.id === competencyId ? { ...c, ...updates } : c
+      ),
+    }));
+  }, []);
+
+  const updateQuestion = useCallback((questionId: string, updates: Partial<AssessmentQuestion>) => {
+    setModuleConfig((prev) => ({
+      ...prev,
+      questions: prev.questions.map((q) =>
+        q.id === questionId ? { ...q, ...updates } : q
+      ),
+    }));
+  }, []);
+
+  const updateActivity = useCallback((activityId: string, updates: Partial<GuidedActivity>) => {
+    setModuleConfig((prev) => ({
+      ...prev,
+      activities: prev.activities.map((a) =>
+        a.id === activityId ? { ...a, ...updates } : a
+      ),
+    }));
+  }, []);
+
+  const resetConfig = useCallback(() => {
+    setModuleConfig(getInitialConfig());
   }, []);
 
   return (
@@ -66,6 +126,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setAttemptAnswers,
         assessmentSubmitted,
         setAssessmentSubmitted,
+        moduleConfig,
+        updateOverallThreshold,
+        updateCompetency,
+        updateQuestion,
+        updateActivity,
+        resetConfig,
       }}
     >
       {children}
