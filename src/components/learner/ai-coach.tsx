@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { coachResponses, coachFallback } from "@/lib/data/seed";
+import { useApp } from "../providers";
+import { apiClient } from "@/lib/api-client";
 import type { CoachMessage, CoachCategory, GroundingLevel, Citation } from "@/lib/domain/types";
 
 interface Props {
@@ -9,18 +10,8 @@ interface Props {
   onBack: () => void;
 }
 
-function findResponse(input: string) {
-  const lower = input.toLowerCase();
-  for (const entry of coachResponses) {
-    const matchCount = entry.keywords.filter((kw) => lower.includes(kw)).length;
-    if (matchCount >= 1) {
-      return entry.response;
-    }
-  }
-  return coachFallback;
-}
-
 export function AICoach({ onProceedToAssessment, onBack }: Props) {
+  const { currentUser } = useApp();
   const [messages, setMessages] = useState<CoachMessage[]>([
     {
       id: "welcome",
@@ -36,13 +27,14 @@ export function AICoach({ onProceedToAssessment, onBack }: Props) {
   ]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [conversationId, setConversationId] = useState<string | undefined>();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     const trimmed = input.trim();
     if (!trimmed || isTyping) return;
 
@@ -57,9 +49,16 @@ export function AICoach({ onProceedToAssessment, onBack }: Props) {
     setInput("");
     setIsTyping(true);
 
-    // Simulate AI response delay
-    setTimeout(() => {
-      const response = findResponse(trimmed);
+    try {
+      const response = await apiClient.chat({
+        moduleId: "module-1",
+        message: trimmed,
+        conversationId,
+        learnerId: currentUser.id,
+      });
+
+      setConversationId(response.conversationId);
+
       const assistantMsg: CoachMessage = {
         id: `msg-${Date.now()}-resp`,
         role: "assistant",
@@ -71,8 +70,21 @@ export function AICoach({ onProceedToAssessment, onBack }: Props) {
         timestamp: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, assistantMsg]);
+    } catch {
+      const errorMsg: CoachMessage = {
+        id: `msg-${Date.now()}-err`,
+        role: "assistant",
+        content: "I encountered an issue processing your question. Please try again or consult the responsible instructor.",
+        category: "OUT_OF_SCOPE",
+        grounding: "INSUFFICIENT",
+        citations: [],
+        escalate: true,
+        timestamp: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, errorMsg]);
+    } finally {
       setIsTyping(false);
-    }, 800 + Math.random() * 700);
+    }
   };
 
   const groundingBadge = (grounding?: GroundingLevel) => {
