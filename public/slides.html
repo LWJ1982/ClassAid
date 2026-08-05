@@ -1,322 +1,452 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Class AId - AI-Powered Readiness & Learning Assurance</title>
-<style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #0f172a; color: #e2e8f0; overflow: hidden; }
-.slide { width: 100vw; height: 100vh; display: none; padding: 40px 56px; position: relative; }
-.slide.active { display: flex; }
-.slide-1 { flex-direction: column; gap: 24px; }
-.slide-2 { flex-direction: column; gap: 20px; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class AId - AI-Powered Readiness & Learning Assurance</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-.slide-header { display: flex; justify-content: space-between; align-items: center; }
-.slide-title { font-size: 26px; font-weight: 700; color: #f8fafc; }
-.slide-subtitle { font-size: 13px; color: #94a3b8; }
-.badge { background: #1e40af; color: #93c5fd; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #0a0a0f;
+            color: #e8e8f0;
+            overflow: hidden;
+            height: 100vh;
+        }
 
-.three-col { display: grid; grid-template-columns: 1fr 1.1fr 1.5fr; gap: 28px; flex: 1; }
-.col { display: flex; flex-direction: column; gap: 12px; }
-.col-title { font-size: 13px; font-weight: 700; color: #60a5fa; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 4px; border-bottom: 2px solid #1e3a5f; padding-bottom: 6px; }
+        .slide {
+            display: none;
+            width: 100vw;
+            height: 100vh;
+            padding: 60px 80px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            animation: fadeIn 0.4s ease;
+        }
 
-.problem-item { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; line-height: 1.5; color: #cbd5e1; }
-.problem-icon { color: #f87171; font-size: 14px; margin-top: 2px; flex-shrink: 0; }
+        .slide.active {
+            display: flex;
+            flex-direction: column;
+        }
 
-.shift-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-.shift-table th { text-align: left; color: #94a3b8; font-weight: 600; padding: 6px 8px; border-bottom: 1px solid #334155; font-size: 11px; text-transform: uppercase; }
-.shift-table td { padding: 7px 8px; border-bottom: 1px solid #1e293b; vertical-align: top; }
-.shift-table .before { color: #f87171; }
-.shift-table .after { color: #34d399; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
-.arch-box { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 16px; flex: 1; display: flex; flex-direction: column; gap: 12px; }
-.arch-layer { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 6px; font-size: 12px; }
-.arch-browser { background: #312e81; border: 1px solid #4338ca; }
-.arch-nextjs { background: #1e3a5f; border: 1px solid #2563eb; }
-.arch-engine { background: #064e3b; border: 1px solid #059669; }
-.arch-services { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.arch-supabase { background: #1c1917; border: 1px solid #78716c; padding: 10px; border-radius: 6px; }
-.arch-dify { background: #1e1b4b; border: 1px solid #6366f1; padding: 10px; border-radius: 6px; }
-.arch-label { font-size: 11px; font-weight: 700; color: #f8fafc; margin-bottom: 4px; }
-.arch-desc { font-size: 10px; color: #94a3b8; line-height: 1.4; }
-.arch-arrow { text-align: center; color: #475569; font-size: 16px; margin: 2px 0; }
-.principles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 4px; }
-.principle { background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 8px 10px; text-align: center; }
-.principle-title { font-size: 10px; font-weight: 700; color: #fbbf24; margin-bottom: 2px; }
-.principle-desc { font-size: 10px; color: #94a3b8; }
+        .slide-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            border-bottom: 1px solid #2a2a3a;
+            padding-bottom: 20px;
+        }
 
-/* Slide 2 styles */
-.journeys { display: grid; grid-template-columns: 1fr; gap: 16px; flex: 1; }
-.journey-section { background: #1e293b; border-radius: 10px; padding: 16px 20px; border: 1px solid #334155; }
-.journey-title { font-size: 13px; font-weight: 700; color: #60a5fa; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
-.journey-title.instructor { color: #a78bfa; }
-.journey-flow { display: flex; align-items: center; gap: 6px; overflow-x: auto; }
-.journey-step { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 10px 12px; min-width: 120px; text-align: center; flex-shrink: 0; }
-.journey-step.critical { border-color: #dc2626; background: #1c0f0f; }
-.journey-step.success { border-color: #059669; background: #0a1f1a; }
-.step-name { font-size: 11px; font-weight: 700; color: #f8fafc; margin-bottom: 4px; }
-.step-detail { font-size: 10px; color: #94a3b8; line-height: 1.3; }
-.flow-arrow { color: #475569; font-size: 18px; flex-shrink: 0; }
+        .slide-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
 
-.interrelation { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 1px solid #334155; border-radius: 10px; padding: 16px 24px; display: flex; align-items: center; justify-content: center; gap: 32px; }
-.inter-col { text-align: center; }
-.inter-label { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 6px; }
-.inter-action { font-size: 12px; color: #e2e8f0; line-height: 1.5; }
-.inter-arrow { font-size: 24px; color: #60a5fa; }
-.inter-center { background: #1e40af; border-radius: 8px; padding: 12px 20px; }
-.inter-center-title { font-size: 12px; font-weight: 700; color: #f8fafc; }
-.inter-center-desc { font-size: 10px; color: #93c5fd; margin-top: 4px; }
+        .slide-number {
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: 500;
+        }
 
-.tagline { text-align: center; font-size: 14px; font-style: italic; color: #94a3b8; padding: 8px 0; border-top: 1px solid #334155; }
-.tagline strong { color: #f8fafc; font-style: normal; }
+        .slide-content {
+            flex: 1;
+            display: grid;
+            gap: 30px;
+            overflow-y: auto;
+        }
 
-/* Navigation */
-.nav { position: fixed; bottom: 24px; right: 56px; display: flex; gap: 12px; z-index: 100; }
-.nav-btn { background: #1e293b; border: 1px solid #475569; color: #e2e8f0; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; transition: all 0.2s; }
-.nav-btn:hover { background: #334155; border-color: #60a5fa; }
-.nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-.slide-indicator { position: fixed; bottom: 28px; left: 56px; font-size: 12px; color: #64748b; }
+        /* Slide 1 Layout */
+        .three-col {
+            grid-template-columns: 1fr 1fr 1fr;
+            align-items: start;
+        }
 
-@media print {
-  .slide { display: flex !important; page-break-after: always; height: 100vh; }
-  .nav, .slide-indicator { display: none; }
-}
-</style>
+        .section {
+            background: #12121a;
+            border: 1px solid #1e1e2e;
+            border-radius: 12px;
+            padding: 28px;
+            height: 100%;
+        }
+
+        .section h2 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 18px;
+            color: #a78bfa;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .section h3 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin: 14px 0 8px 0;
+            color: #c4b5fd;
+        }
+
+        .section p, .section li {
+            font-size: 0.88rem;
+            line-height: 1.6;
+            color: #b8b8c8;
+        }
+
+        .section ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .section ul li {
+            padding: 5px 0;
+            padding-left: 18px;
+            position: relative;
+        }
+
+        .section ul li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 12px;
+            width: 6px;
+            height: 6px;
+            background: #6366f1;
+            border-radius: 50%;
+        }
+
+        .architecture-flow {
+            background: #1a1a2e;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 12px;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.78rem;
+            color: #a5b4fc;
+            line-height: 1.8;
+            text-align: center;
+        }
+
+        .principles {
+            margin-top: 14px;
+        }
+
+        .principle {
+            background: #1a1a2e;
+            border-left: 3px solid #6366f1;
+            padding: 10px 14px;
+            margin-bottom: 10px;
+            border-radius: 0 6px 6px 0;
+        }
+
+        .principle strong {
+            color: #e8e8f0;
+            font-size: 0.82rem;
+        }
+
+        .principle span {
+            display: block;
+            font-size: 0.78rem;
+            color: #9898a8;
+            margin-top: 3px;
+        }
+
+        /* Slide 2 Layout */
+        .two-col {
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr auto;
+            align-items: start;
+        }
+
+        .journey-steps {
+            list-style: none;
+            padding: 0;
+        }
+
+        .journey-steps li {
+            padding: 8px 0 8px 30px;
+            position: relative;
+            font-size: 0.85rem;
+            color: #b8b8c8;
+            line-height: 1.5;
+        }
+
+        .journey-steps li::before {
+            content: attr(data-step);
+            position: absolute;
+            left: 0;
+            top: 8px;
+            width: 20px;
+            height: 20px;
+            background: #6366f1;
+            border-radius: 50%;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .journey-steps li strong {
+            color: #e8e8f0;
+        }
+
+        .interrelation {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, #1a1a2e, #12121a);
+            border: 1px solid #2a2a4a;
+            border-radius: 12px;
+            padding: 24px 32px;
+            text-align: center;
+        }
+
+        .interrelation h2 {
+            font-size: 1rem;
+            color: #a78bfa;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .interrelation .flow {
+            font-size: 0.9rem;
+            color: #b8b8c8;
+            margin-bottom: 14px;
+            line-height: 1.6;
+        }
+
+        .interrelation .flow .arrow {
+            color: #6366f1;
+            margin: 0 6px;
+        }
+
+        .tagline {
+            font-style: italic;
+            color: #c4b5fd;
+            font-size: 0.92rem;
+            margin-top: 8px;
+            padding-top: 12px;
+            border-top: 1px solid #2a2a3a;
+        }
+
+        .feature-tag {
+            display: inline-block;
+            font-size: 0.7rem;
+            background: #2a2a4a;
+            color: #a5b4fc;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-left: 4px;
+        }
+
+        /* Navigation */
+        .nav {
+            position: fixed;
+            bottom: 30px;
+            right: 40px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .nav button {
+            width: 44px;
+            height: 44px;
+            border: 1px solid #2a2a3a;
+            background: #12121a;
+            color: #e8e8f0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .nav button:hover {
+            background: #1e1e2e;
+            border-color: #6366f1;
+        }
+
+        .nav button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        /* Progress */
+        .progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #6366f1, #8b5cf6);
+            transition: width 0.3s ease;
+        }
+    </style>
 </head>
 <body>
+    <div class="progress" id="progress"></div>
 
-<!-- SLIDE 1 -->
-<div class="slide slide-1 active" id="slide1">
-  <div class="slide-header">
-    <div>
-      <div class="slide-title">CLASS AId</div>
-      <div class="slide-subtitle">AI-Powered Readiness & Learning Assurance Platform</div>
-    </div>
-    <span class="badge">MVP Architecture</span>
-  </div>
+    <!-- Slide 1: Why This Matters | What Changes | System Architecture -->
+    <div class="slide active" id="slide-1">
+        <div class="slide-header">
+            <h1>Why This Matters | What Changes | System Architecture</h1>
+            <span class="slide-number">1 / 2</span>
+        </div>
+        <div class="slide-content three-col">
+            <div class="section">
+                <h2>The Problem</h2>
+                <ul>
+                    <li>Students enter lab sessions underprepared despite manuals and videos</li>
+                    <li>Instructors discover knowledge gaps during sessions - too late to fix</li>
+                    <li>Time wasted repeating fundamentals that should have been mastered before arrival</li>
+                </ul>
+                <h3>What Changes</h3>
+                <ul>
+                    <li><strong>Resource distribution</strong> becomes <strong>Readiness assurance</strong></li>
+                    <li>AI explains, but code decides</li>
+                    <li>Critical safety failures block readiness regardless of score</li>
+                    <li>System works without AI - assessment functions if AI is down</li>
+                </ul>
+            </div>
 
-  <div class="three-col">
-    <!-- Column 1: Why This Matters -->
-    <div class="col">
-      <div class="col-title">Why This Matters</div>
-      <div class="problem-item">
-        <span class="problem-icon">&#x2716;</span>
-        <span>Students receive manuals and videos but <strong style="color:#f8fafc">no confirmation</strong> they understood safety, concepts, or procedures</span>
-      </div>
-      <div class="problem-item">
-        <span class="problem-icon">&#x2716;</span>
-        <span>Instructors discover knowledge gaps <strong style="color:#f8fafc">during</strong> the session &mdash; too late to intervene effectively</span>
-      </div>
-      <div class="problem-item">
-        <span class="problem-icon">&#x2716;</span>
-        <span>Significant session time spent <strong style="color:#f8fafc">repeating fundamentals</strong> instead of advanced application</span>
-      </div>
-      <div class="problem-item">
-        <span class="problem-icon">&#x2716;</span>
-        <span>Critical safety misconceptions go <strong style="color:#f8fafc">undetected</strong> until hands-on activity begins</span>
-      </div>
-      <div class="problem-item">
-        <span class="problem-icon">&#x2716;</span>
-        <span>No scalable way to verify readiness across <strong style="color:#f8fafc">multiple modules</strong> and cohorts</span>
-      </div>
-    </div>
+            <div class="section">
+                <h2>System Architecture</h2>
+                <div class="architecture-flow">
+                    Browser<br>
+                    &darr;<br>
+                    Next.js (App Router)<br>
+                    &darr;<br>
+                    Cloudflare Workers<br>
+                    &darr;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&darr;<br>
+                    D1 Database&nbsp;&nbsp;&nbsp;&nbsp;Workers AI<br>
+                    <em>(DECIDES)</em>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<em>(EXPLAINS)</em><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&darr;<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Vectorize<br>
+                    <br>
+                    + R2 (File Storage)
+                </div>
+                <p style="margin-top: 12px; font-size: 0.8rem; color: #888;">
+                    Llama 3.1 for question generation | BGE-base for embeddings | D1 for deterministic scoring
+                </p>
+            </div>
 
-    <!-- Column 2: What Changes -->
-    <div class="col">
-      <div class="col-title">What Changes</div>
-      <table class="shift-table">
-        <thead><tr><th>Before</th><th>After</th></tr></thead>
-        <tbody>
-          <tr><td class="before">"Did you read the manual?"</td><td class="after">"Demonstrate you understood it"</td></tr>
-          <tr><td class="before">Gaps found during session</td><td class="after">Gaps identified before session</td></tr>
-          <tr><td class="before">Instructor repeats basics</td><td class="after">Instructor focuses on application</td></tr>
-          <tr><td class="before">No readiness visibility</td><td class="after">Dashboard shows who needs help</td></tr>
-          <tr><td class="before">AI gives answers freely</td><td class="after">AI explains; code decides status</td></tr>
-          <tr><td class="before">Safety knowledge assumed</td><td class="after">Critical failures block readiness</td></tr>
-        </tbody>
-      </table>
-      <div style="margin-top:auto; background:#0f2a1f; border:1px solid #059669; border-radius:6px; padding:10px; text-align:center;">
-        <div style="font-size:11px; color:#34d399; font-weight:700;">CORE SHIFT</div>
-        <div style="font-size:12px; color:#e2e8f0; margin-top:4px;">Resource Distribution &rarr; Readiness Assurance</div>
-      </div>
-    </div>
-
-    <!-- Column 3: Architecture -->
-    <div class="col">
-      <div class="col-title">System Architecture</div>
-      <div class="arch-box">
-        <div class="arch-layer arch-browser">
-          <span style="font-size:14px">&#x1F4BB;</span>
-          <span><strong>Browser</strong> &mdash; Learner | Instructor | Admin UIs</span>
+            <div class="section">
+                <h2>Three Principles</h2>
+                <div class="principles">
+                    <div class="principle">
+                        <strong>1. AI is Not the Authority</strong>
+                        <span>LLM cannot determine readiness status. D1 database applies rules deterministically.</span>
+                    </div>
+                    <div class="principle">
+                        <strong>2. Critical Override</strong>
+                        <span>A safety-critical failure = not ready, regardless of overall score percentage.</span>
+                    </div>
+                    <div class="principle">
+                        <strong>3. Works Without AI</strong>
+                        <span>Assessment, scoring, and readiness determination function even if Workers AI is unavailable.</span>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="arch-arrow">&darr; only talks to Next.js</div>
-        <div class="arch-layer arch-nextjs">
-          <span style="font-size:14px">&#x2699;</span>
-          <span><strong>Next.js App</strong> &mdash; Routes, Validation, API Layer</span>
-        </div>
-        <div class="arch-layer arch-engine">
-          <span style="font-size:14px">&#x1F6E1;</span>
-          <span><strong>Readiness Engine</strong> &mdash; Deterministic scoring, critical rules, thresholds</span>
-        </div>
-        <div class="arch-arrow">&darr;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&darr;</div>
-        <div class="arch-services">
-          <div class="arch-supabase">
-            <div class="arch-label">Supabase <span style="color:#059669;">DECIDES</span></div>
-            <div class="arch-desc">Modules, assessments, attempts, results, critical rules, audit trail</div>
-          </div>
-          <div class="arch-dify">
-            <div class="arch-label">Dify <span style="color:#818cf8;">EXPLAINS</span></div>
-            <div class="arch-desc">Retrieval, grounded tutor, citations, remediation wording</div>
-          </div>
-        </div>
-        <div class="principles">
-          <div class="principle">
-            <div class="principle-title">AI &#x2260; Authority</div>
-            <div class="principle-desc">LLM cannot determine readiness status</div>
-          </div>
-          <div class="principle">
-            <div class="principle-title">Critical Override</div>
-            <div class="principle-desc">Safety fail = not ready regardless of score</div>
-          </div>
-          <div class="principle">
-            <div class="principle-title">Works Without AI</div>
-            <div class="principle-desc">Assessment & report function if Dify is down</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- SLIDE 2 -->
-<div class="slide slide-2" id="slide2">
-  <div class="slide-header">
-    <div>
-      <div class="slide-title">User Journeys & Interrelation</div>
-      <div class="slide-subtitle">How learner readiness drives instructor insight</div>
-    </div>
-    <span class="badge">Two Personas, One System</span>
-  </div>
-
-  <div class="journeys">
-    <!-- Learner Journey -->
-    <div class="journey-section">
-      <div class="journey-title"><span style="font-size:16px">&#x1F393;</span> Learner Journey &mdash; Alex Tan</div>
-      <div class="journey-flow">
-        <div class="journey-step">
-          <div class="step-name">Dashboard</div>
-          <div class="step-detail">Assigned modules, progress, status</div>
-        </div>
-        <span class="flow-arrow">&rarr;</span>
-        <div class="journey-step">
-          <div class="step-name">Overview</div>
-          <div class="step-detail">Objectives, prereqs, compliance notice</div>
-        </div>
-        <span class="flow-arrow">&rarr;</span>
-        <div class="journey-step">
-          <div class="step-name">Guided Activity</div>
-          <div class="step-detail">Step-by-step with warnings & sources</div>
-        </div>
-        <span class="flow-arrow">&rarr;</span>
-        <div class="journey-step">
-          <div class="step-name">AI Coach</div>
-          <div class="step-detail">Grounded answers, citations, hints only</div>
-        </div>
-        <span class="flow-arrow">&rarr;</span>
-        <div class="journey-step critical">
-          <div class="step-name">Assessment</div>
-          <div class="step-detail">5 Qs, server-scored, critical rules enforced</div>
-        </div>
-        <span class="flow-arrow">&rarr;</span>
-        <div class="journey-step success">
-          <div class="step-name">Readiness Report</div>
-          <div class="step-detail">Score, status, gaps, remediation, sources</div>
-        </div>
-      </div>
     </div>
 
-    <!-- Instructor Journey -->
-    <div class="journey-section">
-      <div class="journey-title instructor"><span style="font-size:16px">&#x1F9D1;&#x200D;&#x1F3EB;</span> Instructor Journey &mdash; Dr Sarah Lim</div>
-      <div class="journey-flow">
-        <div class="journey-step">
-          <div class="step-name">Cohort Readiness</div>
-          <div class="step-detail">30 assigned, 24 completed, 18 ready, 6 need review</div>
+    <!-- Slide 2: User Journeys & Interrelation -->
+    <div class="slide" id="slide-2">
+        <div class="slide-header">
+            <h1>User Journeys & Interrelation</h1>
+            <span class="slide-number">2 / 2</span>
         </div>
-        <span class="flow-arrow">&rarr;</span>
-        <div class="journey-step critical">
-          <div class="step-name">Misconceptions</div>
-          <div class="step-detail">Ranked gaps with counts; critical items flagged</div>
+        <div class="slide-content two-col">
+            <div class="section">
+                <h2>Learner Journey</h2>
+                <ol class="journey-steps">
+                    <li data-step="1"><strong>Dashboard</strong> - View assigned modules, track progress</li>
+                    <li data-step="2"><strong>Module Overview</strong> - Read objectives, prerequisites, compliance notice</li>
+                    <li data-step="3"><strong>Guided Activity</strong> - Step through content with adaptive checkpoints <span class="feature-tag">min read time</span> <span class="feature-tag">auto-loop on failure</span></li>
+                    <li data-step="4"><strong>AI Coach</strong> - Ask questions, get RAG-powered answers with cited sources</li>
+                    <li data-step="5"><strong>Assessment</strong> - 5 questions, server-scored, critical Qs can block Ready status</li>
+                    <li data-step="6"><strong>Readiness Report</strong> - Score breakdown, competency analysis, remediation actions</li>
+                </ol>
+            </div>
+
+            <div class="section">
+                <h2>Instructor Journey</h2>
+                <ol class="journey-steps">
+                    <li data-step="1"><strong>Cohort Insights</strong> - Readiness distribution, competency averages</li>
+                    <li data-step="2"><strong>Step Friction</strong> - Which steps cause retries, time bottlenecks</li>
+                    <li data-step="3"><strong>Module Configuration</strong> - Thresholds, weights, critical flags</li>
+                    <li data-step="4"><strong>Content & AI</strong> - Upload files, auto-generate questions, approve</li>
+                    <li data-step="5"><strong>Checkpoint Approval</strong> - Review, approve/reject/edit generated Qs</li>
+                    <li data-step="6"><strong>Intervention List</strong> - Prioritised learners needing help</li>
+                </ol>
+            </div>
+
+            <div class="interrelation">
+                <h2>How They Connect</h2>
+                <div class="flow">
+                    Learner completes assessment <span class="arrow">&rarr;</span>
+                    Readiness Engine scores deterministically <span class="arrow">&rarr;</span>
+                    Result feeds instructor dashboard <span class="arrow">&rarr;</span>
+                    Instructor sees who needs intervention before the session
+                </div>
+                <div class="tagline">
+                    "The learner proves readiness. The instructor gains visibility. The system ensures no one enters unprepared."
+                </div>
+            </div>
         </div>
-        <span class="flow-arrow">&rarr;</span>
-        <div class="journey-step">
-          <div class="step-name">Intervention List</div>
-          <div class="step-detail">Who needs help, why, and priority level</div>
-        </div>
-        <span class="flow-arrow">&rarr;</span>
-        <div class="journey-step">
-          <div class="step-name">Attempt Detail</div>
-          <div class="step-detail">Q-by-Q results, critical failures, remediation</div>
-        </div>
-        <span class="flow-arrow">&rarr;</span>
-        <div class="journey-step success">
-          <div class="step-name">Focused Session</div>
-          <div class="step-detail">Advanced teaching, not repeating basics</div>
-        </div>
-      </div>
     </div>
 
-    <!-- Interrelation -->
-    <div class="interrelation">
-      <div class="inter-col">
-        <div class="inter-label">Learner</div>
-        <div class="inter-action">Completes assessment<br>Receives targeted feedback<br>Reviews & reassesses</div>
-      </div>
-      <div class="inter-arrow">&rarr;</div>
-      <div class="inter-center">
-        <div class="inter-center-title">Deterministic Readiness Engine</div>
-        <div class="inter-center-desc">Scores, applies critical rules, generates report<br>Feeds data to both personas simultaneously</div>
-      </div>
-      <div class="inter-arrow">&rarr;</div>
-      <div class="inter-col">
-        <div class="inter-label">Instructor</div>
-        <div class="inter-action">Sees cohort readiness<br>Identifies misconceptions<br>Intervenes before session</div>
-      </div>
+    <!-- Navigation -->
+    <div class="nav">
+        <button id="prev" onclick="changeSlide(-1)" disabled>&larr;</button>
+        <button id="next" onclick="changeSlide(1)">&rarr;</button>
     </div>
-  </div>
 
-  <div class="tagline">
-    <strong>"The learner proves readiness. The instructor gains visibility. The system ensures no one enters unprepared."</strong>
-  </div>
-</div>
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 2;
 
-<!-- Navigation -->
-<div class="nav">
-  <button class="nav-btn" id="prevBtn" onclick="navigate(-1)" disabled>&larr; Previous</button>
-  <button class="nav-btn" id="nextBtn" onclick="navigate(1)">Next &rarr;</button>
-</div>
-<div class="slide-indicator" id="indicator">Slide 1 of 2</div>
+        function changeSlide(direction) {
+            const newSlide = currentSlide + direction;
+            if (newSlide < 1 || newSlide > totalSlides) return;
 
-<script>
-let current = 0;
-const slides = document.querySelectorAll('.slide');
-const total = slides.length;
+            document.getElementById('slide-' + currentSlide).classList.remove('active');
+            currentSlide = newSlide;
+            document.getElementById('slide-' + currentSlide).classList.add('active');
 
-function navigate(dir) {
-  slides[current].classList.remove('active');
-  current = Math.max(0, Math.min(total - 1, current + dir));
-  slides[current].classList.add('active');
-  document.getElementById('prevBtn').disabled = current === 0;
-  document.getElementById('nextBtn').disabled = current === total - 1;
-  document.getElementById('indicator').textContent = `Slide ${current + 1} of ${total}`;
-}
+            document.getElementById('prev').disabled = currentSlide === 1;
+            document.getElementById('next').disabled = currentSlide === totalSlides;
+            document.getElementById('progress').style.width = (currentSlide / totalSlides * 100) + '%';
+        }
 
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); navigate(1); }
-  if (e.key === 'ArrowLeft') { e.preventDefault(); navigate(-1); }
-});
-</script>
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                changeSlide(1);
+            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                changeSlide(-1);
+            }
+        });
 
+        // Initialize progress bar
+        document.getElementById('progress').style.width = (1 / totalSlides * 100) + '%';
+    </script>
 </body>
 </html>

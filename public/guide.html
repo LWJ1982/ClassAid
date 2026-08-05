@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class AId - User Guide</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #ffffff;
+            color: #1a1a2e;
+            line-height: 1.7;
+            padding: 0;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            padding: 40px 60px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: 1.05rem;
+            opacity: 0.9;
+        }
+
+        .tabs {
+            display: flex;
+            justify-content: center;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+            padding: 0 60px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .tab {
+            padding: 16px 32px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #6c757d;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .tab:hover { color: #4f46e5; }
+
+        .tab.active {
+            color: #4f46e5;
+            border-bottom-color: #4f46e5;
+        }
+
+        .content {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 60px 80px;
+        }
+
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        .tab-panel h2 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .tab-panel .subtitle {
+            color: #6c757d;
+            font-size: 0.95rem;
+            margin-bottom: 32px;
+        }
+
+        .guide-section {
+            margin-bottom: 36px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 28px 32px;
+            border-left: 4px solid #4f46e5;
+        }
+
+        .guide-section h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: #2d2d44;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .guide-section h3 .step-num {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            background: #4f46e5;
+            color: white;
+            border-radius: 50%;
+            font-size: 0.8rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .guide-section p {
+            color: #4a4a5a;
+            font-size: 0.92rem;
+            margin-bottom: 10px;
+            padding-left: 38px;
+        }
+
+        .guide-section ul {
+            padding-left: 56px;
+            margin-top: 8px;
+        }
+
+        .guide-section ul li {
+            color: #4a4a5a;
+            font-size: 0.9rem;
+            margin-bottom: 6px;
+        }
+
+        .note {
+            background: #eef2ff;
+            border: 1px solid #c7d2fe;
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-top: 12px;
+            margin-left: 38px;
+            font-size: 0.85rem;
+            color: #4338ca;
+        }
+
+        .note::before {
+            content: 'Note: ';
+            font-weight: 600;
+        }
+
+        @media print {
+            .tabs { display: none; }
+            .tab-panel { display: block !important; page-break-before: always; }
+            .tab-panel:first-child { page-break-before: avoid; }
+            .header { padding: 20px 30px; }
+            .content { padding: 20px 30px; }
+            body { font-size: 11pt; }
+        }
+
+        @media (max-width: 768px) {
+            .header { padding: 24px 20px; }
+            .header h1 { font-size: 1.5rem; }
+            .tabs { padding: 0 10px; }
+            .tab { padding: 12px 16px; font-size: 0.85rem; }
+            .content { padding: 20px; }
+            .guide-section { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Class AId User Guide</h1>
+        <p>AI-Powered Readiness and Learning Assurance Platform</p>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" data-tab="learner">Learner</div>
+        <div class="tab" data-tab="instructor">Instructor</div>
+        <div class="tab" data-tab="admin">Admin</div>
+    </div>
+
+    <div class="content">
+        <!-- Learner Panel -->
+        <div class="tab-panel active" id="panel-learner">
+            <h2>Learner Guide</h2>
+            <p class="subtitle">Your path from assigned module to proven readiness.</p>
+
+            <div class="guide-section">
+                <h3><span class="step-num">1</span> Dashboard</h3>
+                <p>Your central hub showing all assigned modules and your current progress across each one.</p>
+                <ul>
+                    <li>View modules assigned to you by your instructor</li>
+                    <li>See completion status (Not Started, In Progress, Ready, Not Ready)</li>
+                    <li>Track overall progress across all modules</li>
+                </ul>
+            </div>
+
+            <div class="guide-section">
+                <h3><span class="step-num">2</span> Module Overview</h3>
+                <p>Before starting a module, review what is expected of you.</p>
+                <ul>
+                    <li>Read the module objectives and learning outcomes</li>
+                    <li>Check any prerequisites you need to have completed</li>
+                    <li>Review the compliance notice and readiness criteria</li>
+                </ul>
+            </div>
+
+            <div class="guide-section">
+                <h3><span class="step-num">3</span> Guided Activity</h3>
+                <p>Step through the module content at a pace that ensures comprehension. Adaptive checkpoints verify understanding at each stage.</p>
+                <ul>
+                    <li>Read each step carefully - a minimum read time is enforced</li>
+                    <li>Answer comprehension checkpoints to proceed to the next step</li>
+                    <li>If you answer incorrectly, you will be looped back to review the content before retrying</li>
+                    <li>You must pass each checkpoint before advancing</li>
+                </ul>
+                <div class="note">Take your time. The minimum read time exists to ensure genuine engagement with the material, not to slow you down artificially.</div>
+            </div>
+
+            <div class="guide-section">
+                <h3><span class="step-num">4</span> AI Coach</h3>
+                <p>Ask questions about the module content and receive answers grounded in approved source materials.</p>
+                <ul>
+                    <li>Type any question related to the module content</li>
+                    <li>Receive answers with citations from the approved source documents</li>
+                    <li>Use this to clarify concepts before attempting the assessment</li>
+                </ul>
+                <div class="note">The AI Coach draws only from instructor-approved sources. Answers are for explanation only and do not affect your readiness score.</div>
+            </div>
+
+            <div class="guide-section">
+                <h3><span class="step-num">5</span> Assessment</h3>
+                <p>Demonstrate your readiness with a 5-question assessment scored entirely server-side.</p>
+                <ul>
+                    <li>Answer all 5 questions to the best of your ability</li>
+                    <li>All scoring happens on the server - no client-side manipulation possible</li>
+                    <li>Some questions may be flagged as critical - getting these wrong can block your Ready status regardless of overall score</li>
+                </ul>
+            </div>
+
+            <div class="guide-section">
+                <h3><span class="step-num">6</span> Readiness Report</h3>
+                <p>View your results and understand exactly where you stand.</p>
+                <ul>
+                    <li>See your overall readiness score</li>
+                    <li>Review competency breakdown by topic area</li>
+                    <li>Identify any critical failures that blocked readiness</li>
+                    <li>Follow suggested remediation actions to improve</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Instructor Panel -->
+        <div class="tab-panel" id="panel-instructor">
+            <h2>Instructor Guide</h2>
+            <p class="subtitle">Configure modules, monitor cohort progress, and intervene where needed.</p>
+
+            <div class="guide-section">
+                <h3><span class="step-num">1</span> Cohort Insights</h3>
+                <p>A real-time overview of your cohort's readiness status and performance patterns.</p>
+                <ul>
+                    <li>See how many learners are assigned, started, and completed</li>
+                    <li>View readiness distribution (Ready vs Not Ready vs In Progress)</li>
+                    <li>Review competency averages across all learners</li>
+                    <li>Identify step friction - which steps cause the most retries</li>
+                </ul>
+            </div>
+
+            <div class="guide-section">
+                <h3><span class="step-num">2</span> Module Configuration</h3>
+                <p>Fine-tune assessment criteria to match your standards.</p>
+                <ul>
+                    <li>Set the overall readiness threshold (50-100%)</li>
+                    <li>Adjust competency weights to emphasise critical areas</li>
+                    <li>Set minimum thresholds per competency</li>
+                    <li>Mark questions as mandatory or critical (safety-blocking)</li>
+                </ul>
+                <div class="note">Critical flags mean a learner cannot achieve Ready status if they fail that question, regardless of their total score. Use this for safety-critical knowledge.</div>
+            </div>
+
+            <div class="guide-section">
+                <h3><span class="step-num">3</span> Content & AI</h3>
+                <p>Upload source materials and let AI generate assessment questions from your content.</p>
+                <ul>
+                    <li>Upload source documents (PDF, TXT, MD formats supported)</li>
+                    <li>AI automatically generates questions based on uploaded content</li>
+                    <li>Generated questions appear in the approval queue</li>
+                    <li>Source documents feed the AI Coach RAG system</li>
+                </ul>
+            </div>
+
+            <div class="guide-section">
+                <h3><span class="step-num">4</span> Checkpoint Approval</h3>
+                <p>Review and curate AI-generated questions before they reach learners.</p>
+                <ul>
+                    <li>Review each auto-generated question for accuracy and relevance</li>
+                    <li>Approve, reject, or edit questions as needed</li>
+                    <li>Set minimum read times for guided activity steps</li>
+                    <li>Assign competency tags and critical/mandatory flags</li>
+                </ul>
+            </div>
+
+            <div class="guide-section">
+                <h3><span class="step-num">5</span> Misconceptions</h3>
+                <p>See ranked wrong answers with frequency counts to understand common gaps.</p>
+                <ul>
+                    <li>View the most frequently chosen wrong answers</li>
+                    <li>Identify systematic misunderstandings across your cohort</li>
+                    <li>Use insights to update content or add clarifying material</li>
+                </ul>
+            </div>
+
+            <div class="guide-section">
+                <h3><span class="step-num">6</span> Intervention List</h3>
+                <p>A prioritised list of learners who need your attention before the session.</p>
+                <ul>
+                    <li>Critical failures appear at the top (safety-related gaps)</li>
+                    <li>See each learner's specific weak areas and failure points</li>
+                    <li>Plan targeted interventions before the practical session</li>
+                    <li>Track whether previously flagged learners have improved</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Admin Panel -->
+        <div class="tab-panel" id="panel-admin">
+            <h2>Admin Guide</h2>
+            <p class="subtitle">Manage modules, ensure governance compliance, and maintain audit trails.</p>
+
+            <div class="guide-section">
+                <h3><span class="step-num">1</span> Module Registry</h3>
+                <p>A complete inventory of all modules in the system with full metadata.</p>
+                <ul>
+                    <li>View all modules with title, domain, owner, and version</li>
+                    <li>Check source version and current status (Draft, Published, Archived)</li>
+                    <li>See published date, next review date, and usage statistics</li>
+                    <li>Filter and search across the full module catalogue</li>
+                </ul>
+            </div>
+
+            <div class="guide-section">
+                <h3><span class="step-num">2</span> Governance Warnings</h3>
+                <p>Proactive alerts for modules that may not meet governance standards.</p>
+                <ul>
+                    <li>Draft modules that have been in draft state too long are flagged</li>
+                    <li>Modules with missing or incomplete metadata are identified</li>
+                    <li>Modules past their review date are highlighted</li>
+                    <li>Take action to resolve governance issues before they become problems</li>
+                </ul>
+            </div>
+
+            <div class="guide-section">
+                <h3><span class="step-num">3</span> Audit Trail</h3>
+                <p>A complete, immutable log of all significant actions in the system.</p>
+                <ul>
+                    <li>Every publish, approve, and source update is logged</li>
+                    <li>Threshold changes and configuration modifications are recorded</li>
+                    <li>Each entry includes the actor, timestamp, and full details</li>
+                    <li>Filter by action type, actor, module, or date range</li>
+                </ul>
+                <div class="note">The audit trail is append-only. Records cannot be modified or deleted, ensuring full traceability for compliance requirements.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const tabs = document.querySelectorAll('.tab');
+        const panels = document.querySelectorAll('.tab-panel');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                panels.forEach(p => p.classList.remove('active'));
+
+                tab.classList.add('active');
+                document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>
