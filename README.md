@@ -29,18 +29,30 @@ Class AId is a configurable, text-first readiness platform that helps learners p
 - Supabase (planned - currently using static fixtures)
 - Dify (planned - currently using mocked responses)
 
-## Getting Started
+## Getting Started (Build)
 
 ```bash
+#Local
 pnpm install
 pnpm dev
+
+#Cloud
+# 1. Create Cloudflare resources (one-time)
+npx wrangler d1 create classaid-db
+npx wrangler r2 bucket create classaid-files
+npx wrangler vectorize create classaid-vectors --dimensions=768 --metric=cosine
+
+# 2. Update wrangler.toml with the real database_id from step 1
+
+# 3. Run migrations
+npx wrangler d1 migrations apply classaid-db
+
+# 4. Build and deploy
+npm run build:cf
+npm run deploy
+
+
 ```
-
-Open [http://localhost:3000](http://localhost:3000)
-
-## Presentation Slides
-
-The competition slides are available at `/slides.html` when running the dev server.
 
 ## Project Structure
 
