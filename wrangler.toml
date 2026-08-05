@@ -1,0 +1,27 @@
+name = "classaid"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Pages project configuration
+pages_build_output_dir = ".vercel/output/static"
+
+# D1 Database
+[[d1_databases]]
+binding = "DB"
+database_name = "classaid-db"
+database_id = "placeholder-replace-with-real-id"
+migrations_dir = "migrations"
+
+# R2 Bucket for file uploads
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "classaid-files"
+
+# Workers AI
+[ai]
+binding = "AI"
+
+# Vectorize Index
+[[vectorize]]
+binding = "VECTORIZE"
+index_name = "classaid-vectors"
