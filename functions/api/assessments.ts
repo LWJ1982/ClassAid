@@ -105,8 +105,17 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       return Response.json({ error: 'Failed to load competencies' }, { status: 503 });
     }
 
+    // Validate submission completeness: all approved questions must have an answer
+    const approvedQuestions = questions || [];
+    if (answers.length !== approvedQuestions.length) {
+      return Response.json(
+        { error: `Incomplete submission: expected ${approvedQuestions.length} answers, received ${answers.length}` },
+        { status: 400 }
+      );
+    }
+
     // Validate that submitted question IDs exist in the approved question set
-    const validQuestionIds = new Set((questions || []).map((q) => q.id));
+    const validQuestionIds = new Set(approvedQuestions.map((q) => q.id));
     for (const answer of answers) {
       if (!validQuestionIds.has(answer.questionId)) {
         return Response.json(
@@ -117,7 +126,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     }
 
     // Map database records to domain types for the shared engine
-    const engineQuestions: AssessmentQuestion[] = (questions || []).map((q) => ({
+    const engineQuestions: AssessmentQuestion[] = approvedQuestions.map((q) => ({
       id: q.id,
       moduleVersionId: moduleId,
       competencyId: q.competency_id || '',
@@ -178,6 +187,13 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     });
 
     if (attemptError) {
+      // Catch unique violation (PostgreSQL 23505) as a safety net for concurrent duplicates
+      if (attemptError.code === '23505') {
+        return Response.json(
+          { error: 'Assessment already submitted for this module version' },
+          { status: 409 }
+        );
+      }
       console.error('Attempt insert error:', attemptError.message);
       return Response.json({ error: 'Failed to save attempt' }, { status: 503 });
     }

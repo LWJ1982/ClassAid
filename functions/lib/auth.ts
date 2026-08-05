@@ -6,10 +6,28 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 
+export type Role = 'learner' | 'instructor' | 'admin';
+
 export interface AuthenticatedUser {
   id: string;
   email?: string;
+  role: Role;
   isDemoMode: boolean;
+}
+
+/**
+ * Infer role from a demo-mode fallback user ID.
+ * Convention: IDs starting with 'user-instructor' map to instructor,
+ * IDs starting with 'user-admin' map to admin, otherwise learner.
+ */
+function inferRoleFromFallbackId(fallbackUserId: string): Role {
+  if (fallbackUserId.startsWith('user-instructor')) {
+    return 'instructor';
+  }
+  if (fallbackUserId.startsWith('user-admin')) {
+    return 'admin';
+  }
+  return 'learner';
 }
 
 /**
@@ -39,9 +57,16 @@ export async function extractUser(
       return null;
     }
 
+    const metadataRole = data.user.user_metadata?.role as string | undefined;
+    const role: Role =
+      metadataRole === 'instructor' || metadataRole === 'admin'
+        ? metadataRole
+        : 'learner';
+
     return {
       id: data.user.id,
       email: data.user.email,
+      role,
       isDemoMode: false,
     };
   }
@@ -50,9 +75,18 @@ export async function extractUser(
   if (fallbackUserId) {
     return {
       id: fallbackUserId,
+      role: inferRoleFromFallbackId(fallbackUserId),
       isDemoMode: true,
     };
   }
 
   return null;
+}
+
+/**
+ * Checks whether the user has one of the allowed roles.
+ * Returns true if the user's role is in the allowed set.
+ */
+export function requireRole(user: AuthenticatedUser, allowedRoles: Role[]): boolean {
+  return allowedRoles.includes(user.role);
 }

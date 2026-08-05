@@ -7,7 +7,7 @@ import type { Env } from '../lib/env';
 import { createSupabaseClient } from '../lib/supabase';
 import { generateEmbedding } from '../lib/embeddings';
 import { uploadFieldsSchema } from '../lib/validation';
-import { extractUser } from '../lib/auth';
+import { extractUser, requireRole } from '../lib/auth';
 
 /** Allowed text-based content types for upload */
 const ALLOWED_CONTENT_TYPES = new Set([
@@ -48,6 +48,14 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       return Response.json(
         { error: 'Unauthorized: invalid or expired token' },
         { status: 401 }
+      );
+    }
+
+    // Only instructors and admins can upload documents
+    if (!requireRole(user, ['instructor', 'admin'])) {
+      return Response.json(
+        { error: 'Forbidden: insufficient permissions' },
+        { status: 403 }
       );
     }
 

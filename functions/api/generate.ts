@@ -7,7 +7,7 @@ import type { Env } from '../lib/env';
 import { createSupabaseClient } from '../lib/supabase';
 import { callGroq, GroqError } from '../lib/groq';
 import { generateRequestSchema } from '../lib/validation';
-import { extractUser } from '../lib/auth';
+import { extractUser, requireRole } from '../lib/auth';
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
@@ -32,6 +32,14 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       return Response.json(
         { error: 'Unauthorized: invalid or expired token' },
         { status: 401 }
+      );
+    }
+
+    // Only instructors and admins can generate questions
+    if (!requireRole(user, ['instructor', 'admin'])) {
+      return Response.json(
+        { error: 'Forbidden: insufficient permissions' },
+        { status: 403 }
       );
     }
 

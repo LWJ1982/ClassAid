@@ -6,7 +6,7 @@
 import type { Env } from '../lib/env';
 import { createSupabaseClient } from '../lib/supabase';
 import { checkpointPatchSchema } from '../lib/validation';
-import { extractUser } from '../lib/auth';
+import { extractUser, requireRole } from '../lib/auth';
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const { env } = context;
@@ -77,6 +77,14 @@ export const onRequestPatch: PagesFunction<Env> = async (context) => {
       return Response.json(
         { error: 'Unauthorized: invalid or expired token' },
         { status: 401 }
+      );
+    }
+
+    // Only instructors and admins can approve/reject checkpoints
+    if (!requireRole(user, ['instructor', 'admin'])) {
+      return Response.json(
+        { error: 'Forbidden: insufficient permissions' },
+        { status: 403 }
       );
     }
 

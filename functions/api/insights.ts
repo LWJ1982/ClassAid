@@ -6,12 +6,13 @@
 import type { Env } from '../lib/env';
 import { createSupabaseClient } from '../lib/supabase';
 import { insightsQuerySchema } from '../lib/validation';
+import { extractUser, requireRole } from '../lib/auth';
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
-  const { env } = context;
+  const { request, env } = context;
 
   try {
-    const url = new URL(context.request.url);
+    const url = new URL(request.url);
     const moduleId = url.searchParams.get('moduleId');
 
     const parsed = insightsQuerySchema.safeParse({ moduleId });
@@ -23,6 +24,23 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     }
 
     const supabase = createSupabaseClient(env);
+
+    // Require authentication for insights
+    const user = await extractUser(request, supabase);
+    if (!user) {
+      return Response.json(
+        { error: 'Unauthorized: authentication required' },
+        { status: 401 }
+      );
+    }
+
+    // Only instructors and admins can view insights
+    if (!requireRole(user, ['instructor', 'admin'])) {
+      return Response.json(
+        { error: 'Forbidden: insufficient permissions' },
+        { status: 403 }
+      );
+    }
 
     // Count distinct learners assigned (enrolled) for this module
     // A learner is considered "assigned" if they have any attempt (regardless of status)
