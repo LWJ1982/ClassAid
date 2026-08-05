@@ -9,6 +9,6 @@
     "tests": "pass",
     "test_quality": "pass",
     "docker_build": "skipped",
-    "summary": "TypeScript typecheck passes. Static export build succeeds (out/ directory). All 56 unit tests pass (readiness engine: 19, groq client: 9, validation: 28). Tests exercise real logic and would fail if code reverted. No Docker in this project (Cloudflare Pages deployment). Review fixes applied: JWT auth, shared engine, idempotency, chat classification, real insights queries, upload format validation."
+    "summary": "TypeScript typecheck passes. Static export build succeeds (out/ directory). All 56 unit tests pass (readiness engine: 19, groq client: 9, validation: 28). v2 review fixes applied: role-based auth (AuthenticatedUser.role + requireRole helper), partial submission pre-check (400 not 503), role guards on generate/upload/checkpoints/insights, auth-aware modules filtering, idempotency partial unique index + 23505 catch."
   }
 }
