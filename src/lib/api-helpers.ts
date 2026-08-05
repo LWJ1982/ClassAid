@@ -4,17 +4,10 @@
 
 import { NextResponse } from "next/server";
 import type { CloudflareEnv } from "./cloudflare";
+import { getCloudflareEnv } from "./cloudflare";
 
 export function getEnv(): CloudflareEnv | null {
-  try {
-    // In Cloudflare Pages Workers runtime, bindings are on process.env
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const env = (process as any).env as CloudflareEnv;
-    if (env?.DB) return env;
-    return null;
-  } catch {
-    return null;
-  }
+  return getCloudflareEnv();
 }
 
 export function jsonResponse(data: unknown, status = 200) {

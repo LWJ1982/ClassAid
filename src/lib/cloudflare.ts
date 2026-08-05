@@ -135,14 +135,18 @@ interface VectorizeMutationResult {
 
 /**
  * Get Cloudflare bindings from Next.js request context
- * In development, returns null (fallback mode)
+ * Uses @cloudflare/next-on-pages getRequestContext in production
+ * Returns null in local dev (fallback mode)
  */
 export function getCloudflareEnv(): CloudflareEnv | null {
-  // In Cloudflare Pages, bindings are available via process.env at runtime
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const env = (process as any).env as unknown as CloudflareEnv;
-  if (env?.DB && env?.BUCKET && env?.AI && env?.VECTORIZE) {
-    return env;
+  try {
+    // In Cloudflare Pages with next-on-pages, use getRequestContext
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { getRequestContext } = require("@cloudflare/next-on-pages");
+    const ctx = getRequestContext();
+    return ctx.env as CloudflareEnv;
+  } catch {
+    // Not running on Cloudflare — fallback mode
+    return null;
   }
-  return null;
 }

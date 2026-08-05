@@ -1,3 +1,4 @@
+export const runtime = "edge";
 import { NextRequest } from "next/server";
 import { getEnv, jsonResponse, errorResponse, generateId, chunkText, detectSection } from "@/lib/api-helpers";
 import type { AiEmbeddingOutput } from "@/lib/cloudflare";

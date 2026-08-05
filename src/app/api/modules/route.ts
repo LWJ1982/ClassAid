@@ -1,3 +1,4 @@
+export const runtime = "edge";
 import { NextRequest } from "next/server";
 import { getEnv, jsonResponse, errorResponse, generateId } from "@/lib/api-helpers";
 
