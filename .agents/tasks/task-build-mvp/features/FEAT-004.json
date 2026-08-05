@@ -1,0 +1,32 @@
+{
+  "id": "FEAT-004",
+  "type": "feat",
+  "description": "Integrate Supabase Auth into the frontend, replacing the demo role switcher with real login/signup/role-based access. Maintain backward compatibility with the existing demo mode (localStorage fallback) when Supabase is not configured. Add auth-aware providers, login/signup pages, and protected routing.",
+  "status": "pending",
+  "steps": [
+    "Create src/components/auth/login.tsx: Login form component with email/password, Supabase signInWithPassword, error handling, loading states.",
+    "Create src/components/auth/signup.tsx: Signup form component with email/password/name/role selection, Supabase signUp with user_metadata (role, name), email confirmation notice.",
+    "Create src/components/auth/auth-provider.tsx: AuthContext provider that wraps the app. Uses Supabase onAuthStateChange to track session. Exposes user, session, role, isLoading, signIn, signUp, signOut. Falls back to demo mode (existing providers.tsx behavior) when NEXT_PUBLIC_SUPABASE_URL is not set.",
+    "Update src/components/providers.tsx: Integrate AuthProvider. When authenticated via Supabase, derive role from user_metadata. When in demo mode (no Supabase URL), keep existing role-switcher behavior.",
+    "Update src/components/navigation.tsx: Show user info and sign-out button when authenticated. Keep demo role switcher only in demo mode.",
+    "Update src/components/main-router.tsx: Add auth gate - show login/signup when not authenticated (unless in demo mode).",
+    "Update src/lib/api-client.ts: Include Supabase access token in Authorization header on all API requests when user is authenticated. The Pages Functions can then use the token to identify the user.",
+    "Update all Pages Functions to accept and validate the Authorization bearer token from the request headers. Extract user_id from the JWT for operations that need learner/instructor identity. Fall back to request body fields (learnerId, uploadedBy) when no auth token present (demo mode)."
+  ],
+  "acceptance_criteria": [
+    "Login form renders and calls Supabase signInWithPassword",
+    "Signup form renders with role selection and calls Supabase signUp",
+    "AuthProvider exposes session/user/role/signOut",
+    "When NEXT_PUBLIC_SUPABASE_URL is not set, app falls back to demo mode with role switcher",
+    "API client includes Authorization header when authenticated",
+    "Navigation shows user info when authenticated, role switcher in demo mode",
+    "pnpm run typecheck passes",
+    "pnpm run build passes"
+  ],
+  "verification": [
+    "pnpm run typecheck",
+    "pnpm run build"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

@@ -10,9 +10,11 @@
     "deploy": "npx wrangler pages deploy out --commit-dirty=true",
     "start": "next start",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.49.8",
     "next": "15.5.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -21,6 +23,7 @@
   "devDependencies": {
     "@cloudflare/next-on-pages": "^1.13.16",
     "@cloudflare/workers-types": "^4.20240208.0",
+    "@eslint/eslintrc": "^3.3.6",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^18.3.31",
@@ -29,6 +32,7 @@
     "eslint-config-next": "15.5.2",
     "tailwindcss": "^4",
     "typescript": "^5",
+    "vitest": "^3.2.3",
     "wrangler": "^4.118.0"
   },
   "packageManager": "pnpm@10.28.1"

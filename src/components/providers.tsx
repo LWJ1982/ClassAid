@@ -95,8 +95,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return (saved?.moduleConfig as ModuleConfig) ?? getInitialConfig();
   });
 
-  // Mark hydrated after first render — suppress lint: this is the canonical hydration pattern
-  // eslint-disable-next-line react-hooks/set-state-in-effect
+  // Mark hydrated after first render (canonical hydration pattern)
   useEffect(() => { setHydrated(true); }, []);
 
   // Persist state changes

@@ -1,0 +1,28 @@
+{
+  "id": "FEAT-001",
+  "type": "chore",
+  "description": "Environment setup and baseline verification. Install additional dependencies needed for the MVP (Supabase JS client, Vitest). Confirm existing build and typecheck pass. Fix any pre-existing issues.",
+  "status": "in_progress",
+  "steps": [
+    "Add dependencies to package.json: @supabase/supabase-js (client-side and server-side Supabase access), vitest and @testing-library/react for testing",
+    "Run pnpm install to confirm all deps resolve",
+    "Run pnpm run typecheck to confirm zero TypeScript errors",
+    "Run pnpm run build to confirm static export succeeds",
+    "Add 'test' script to package.json pointing to vitest",
+    "Fix the eslint.config.mjs import issue (change 'eslint-config-next/core-web-vitals' to 'eslint-config-next/core-web-vitals.js') so build linting does not emit the ESLint warning"
+  ],
+  "acceptance_criteria": [
+    "pnpm run typecheck passes with zero errors",
+    "pnpm run build succeeds and produces out/ directory",
+    "@supabase/supabase-js is in dependencies",
+    "vitest is in devDependencies with a test script in package.json",
+    "ESLint import warning for core-web-vitals is resolved"
+  ],
+  "verification": [
+    "pnpm run typecheck",
+    "pnpm run build",
+    "pnpm run test -- --run (should exit cleanly even with no test files)"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

@@ -1,0 +1,40 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "Rewrite all 7 Cloudflare Pages Functions to use Supabase (replacing D1), Groq API (replacing Workers AI for LLM), and Cloudflare Workers AI (for embeddings only). Each function keeps the same HTTP interface so the frontend api-client.ts continues to work unchanged. Add graceful fallback when services are unavailable.",
+  "status": "pending",
+  "steps": [
+    "Update the Env interface pattern: Create functions/lib/env.ts with a shared Env interface that includes SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, GROQ_API_KEY, and AI (Cloudflare Workers AI binding for embeddings). Remove D1Database, R2Bucket, VectorizeIndex bindings.",
+    "Create functions/lib/supabase.ts: Helper to create a Supabase service-role client from the Env for use in all API functions.",
+    "Create functions/lib/groq.ts: Typed Groq API client wrapper that calls https://api.groq.com/openai/v1/chat/completions with model llama-3.1-70b-versatile. Include retry logic and timeout handling.",
+    "Create functions/lib/embeddings.ts: Helper that calls Workers AI BGE-base-en-v1.5 for embeddings (same pattern as current upload.ts but extracted). Returns number[] vector.",
+    "Rewrite functions/api/modules.ts: Replace D1 queries with Supabase client queries (supabase.from('modules').select('*, domains(name)')). Keep same response shape.",
+    "Rewrite functions/api/assessments.ts: Replace D1 with Supabase. Load questions/competencies via Supabase, score deterministically (reuse readiness engine logic), persist attempt + answers + result. Keep same response shape.",
+    "Rewrite functions/api/chat.ts: Replace Workers AI LLM (llama-3.1-8b-instruct) with Groq (llama-3.1-70b-versatile). Replace Vectorize with Supabase pgvector similarity search (using the match_source_chunks RPC function). Keep Workers AI only for query embedding. Keep same response shape with citations.",
+    "Rewrite functions/api/upload.ts: Replace R2 with Supabase Storage. Replace Vectorize with pgvector (store embedding in source_chunks.embedding column). Keep Workers AI for chunk embeddings. Keep same response shape.",
+    "Rewrite functions/api/generate.ts: Replace Workers AI LLM with Groq (llama-3.1-70b-versatile). Replace D1 with Supabase for reading activities/chunks and storing generated questions. Keep same response shape.",
+    "Rewrite functions/api/checkpoints.ts: Replace D1 with Supabase queries. Keep same response shape.",
+    "Rewrite functions/api/insights.ts: Replace D1 with Supabase queries. Keep same response shape.",
+    "Create supabase/migrations/0004_vector_search_function.sql: Create a PostgreSQL function match_source_chunks(query_embedding vector(768), match_threshold float, match_count int, filter_module_id uuid) that performs cosine similarity search on source_chunks.embedding.",
+    "Add input validation with Zod to all API functions (validate request bodies per security.md requirements).",
+    "Ensure all functions return graceful error responses when Supabase/Groq are unavailable (503 with descriptive message)."
+  ],
+  "acceptance_criteria": [
+    "All 7 functions compile without TypeScript errors",
+    "Each function uses Supabase for persistence instead of D1",
+    "chat.ts and generate.ts use Groq API for LLM (llama-3.1-70b-versatile model)",
+    "chat.ts and upload.ts use Workers AI for embeddings (BGE-base-en-v1.5)",
+    "upload.ts uses Supabase Storage instead of R2",
+    "chat.ts uses pgvector similarity search instead of Vectorize",
+    "All functions include Zod input validation",
+    "All functions return 503 gracefully when external services are unavailable",
+    "pnpm run typecheck passes",
+    "pnpm run build passes"
+  ],
+  "verification": [
+    "pnpm run typecheck",
+    "pnpm run build"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
