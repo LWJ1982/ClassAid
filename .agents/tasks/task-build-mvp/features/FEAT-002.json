@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "Create Supabase PostgreSQL schema (converting D1 migrations to Supabase-compatible PostgreSQL with pgvector and RLS policies). Create a shared Supabase client library for both client-side (anon key) and server-side (service role key) usage in Pages Functions.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Create supabase/migrations/0001_initial_schema.sql: Convert the existing migrations/0001_initial_schema.sql from D1/SQLite syntax to PostgreSQL. Key changes: TEXT PRIMARY KEY -> uuid with gen_random_uuid() default, INTEGER -> boolean where appropriate, datetime('now') -> now(), JSON columns -> jsonb, add the pgvector extension and a vector(768) column to source_chunks for embeddings.",
     "Create supabase/migrations/0002_rls_policies.sql: Add Row-Level Security policies per the security.md steering file. Learners can only read their own attempts/results/conversations, read published modules and approved questions. Instructors read/write modules they own. Service role bypasses RLS.",
@@ -27,5 +27,5 @@
     "pnpm run build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All files created successfully. Typecheck and build both pass. Used fixed UUIDs for seed data (format: prefix-NNNN-4000-8000-NNN) for consistency. The .gitignore had .env* pattern so added !.env.example exception. The pgvector IVFFlat index requires at least 100 rows to function - this is fine for production but the index creation may warn in an empty database. The functions/tsconfig.json now includes ../src/lib/supabase/**/*.ts so server functions can import shared types."
 }
