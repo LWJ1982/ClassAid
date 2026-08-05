@@ -2,7 +2,7 @@
   "id": "FEAT-006",
   "type": "docs",
   "description": "Create deployment documentation and AWS CDK migration scaffold. Document the end-to-end deployment process for Cloudflare Pages + Supabase + Groq. Provide the AWS CDK TypeScript scaffold for future migration.",
-  "status": "pending",
+  "status": "completed",
   "steps": [
     "Create docs/DEPLOYMENT.md: Step-by-step deployment guide covering: 1) Supabase project setup (create project, run migrations, enable RLS, configure Auth email templates), 2) Groq API key generation, 3) Cloudflare Pages project setup (connect GitHub repo, set environment variables, configure build command), 4) Environment variables reference table, 5) Post-deployment verification checklist.",
     "Create docs/AWS_MIGRATION.md: Document the future AWS migration path per handoff document Section 13. Include: architecture diagram (text), service mapping table (Supabase -> Aurora, Groq -> Bedrock, Cloudflare -> CloudFront+Lambda, etc.), migration steps overview.",
@@ -25,5 +25,5 @@
     "pnpm run build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All documentation and CDK scaffold created successfully. Had to add 'infrastructure' to tsconfig.json exclude array to prevent root TypeScript compilation from trying to resolve aws-cdk-lib imports in the CDK scaffold. Both typecheck and build pass cleanly."
 }
