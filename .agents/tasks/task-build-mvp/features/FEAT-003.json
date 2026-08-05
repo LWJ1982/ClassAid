@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "feat",
   "description": "Rewrite all 7 Cloudflare Pages Functions to use Supabase (replacing D1), Groq API (replacing Workers AI for LLM), and Cloudflare Workers AI (for embeddings only). Each function keeps the same HTTP interface so the frontend api-client.ts continues to work unchanged. Add graceful fallback when services are unavailable.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Update the Env interface pattern: Create functions/lib/env.ts with a shared Env interface that includes SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, GROQ_API_KEY, and AI (Cloudflare Workers AI binding for embeddings). Remove D1Database, R2Bucket, VectorizeIndex bindings.",
     "Create functions/lib/supabase.ts: Helper to create a Supabase service-role client from the Env for use in all API functions.",
@@ -36,5 +36,5 @@
     "pnpm run build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Database types updated to include Relationships arrays and Views/Enums fields to satisfy @supabase/supabase-js v2.112+ GenericSchema constraint. Without these, all query results infer as 'never'. The functions tsconfig was updated to include noEmit and skipLibCheck, and scoped to only include types.ts and server.ts from src/lib/supabase (excluding client.ts which uses process.env). All 7 functions compile cleanly with both pnpm run typecheck and tsc -p functions/tsconfig.json. Build produces static export successfully."
 }
