@@ -4,6 +4,7 @@ import { createContext, useContext, useState, useCallback, useEffect, type React
 import type { Role, DemoUser, ReadinessResult, AttemptAnswer, Competency, AssessmentQuestion, GuidedActivity, CheckpointQuestion, CheckpointApprovalStatus } from "@/lib/domain/types";
 import { demoUsers, competencies as seedCompetencies, questions as seedQuestions, activities as seedActivities, checkpointQuestions as seedCheckpoints } from "@/lib/data/seed";
 import { saveState, loadState, clearState } from "@/lib/persistence";
+import { useAuth } from "@/components/auth/auth-provider";
 
 // Module configuration state managed by instructor
 export interface ModuleConfig {
@@ -58,6 +59,7 @@ function getInitialConfig(): ModuleConfig {
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
+  const { isDemo, role: authRole, user } = useAuth();
   const [hydrated, setHydrated] = useState(false);
   const [role, setRoleState] = useState<Role>(() => {
     if (typeof window === "undefined") return "learner";
@@ -112,11 +114,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   }, [hydrated, role, activityProgress, assessmentAnswers, assessmentSubmitted, readinessResult, attemptAnswers, moduleConfig]);
 
-  const currentUser = demoUsers.find((u) => u.role === role) ?? demoUsers[0];
+  // When authenticated (not demo), derive role from auth context
+  const effectiveRole: Role = isDemo ? role : authRole;
+
+  const currentUser = isDemo
+    ? (demoUsers.find((u) => u.role === effectiveRole) ?? demoUsers[0])
+    : {
+        id: user?.id ?? "anonymous",
+        name: user?.user_metadata?.name ?? user?.email ?? "User",
+        email: user?.email ?? "",
+        role: authRole,
+      };
 
   const setRole = useCallback((newRole: Role) => {
-    setRoleState(newRole);
-  }, []);
+    // Only allow role switching in demo mode
+    if (isDemo) {
+      setRoleState(newRole);
+    }
+  }, [isDemo]);
 
   const setAssessmentAnswer = useCallback((questionId: string, answer: string) => {
     setAssessmentAnswersState((prev) => ({ ...prev, [questionId]: answer }));
@@ -210,7 +225,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     <AppContext.Provider
       value={{
         currentUser,
-        role,
+        role: effectiveRole,
         setRole,
         activityProgress,
         setActivityProgress,

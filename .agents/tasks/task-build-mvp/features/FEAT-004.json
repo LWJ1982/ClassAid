@@ -2,7 +2,7 @@
   "id": "FEAT-004",
   "type": "feat",
   "description": "Integrate Supabase Auth into the frontend, replacing the demo role switcher with real login/signup/role-based access. Maintain backward compatibility with the existing demo mode (localStorage fallback) when Supabase is not configured. Add auth-aware providers, login/signup pages, and protected routing.",
-  "status": "pending",
+  "status": "in_progress",
   "steps": [
     "Create src/components/auth/login.tsx: Login form component with email/password, Supabase signInWithPassword, error handling, loading states.",
     "Create src/components/auth/signup.tsx: Signup form component with email/password/name/role selection, Supabase signUp with user_metadata (role, name), email confirmation notice.",

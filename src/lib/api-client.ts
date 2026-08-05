@@ -82,11 +82,28 @@ export interface GenerateResponse {
 
 class ApiClient {
   private baseUrl = "";
+  private authToken: string | null = null;
+
+  /**
+   * Set the auth token for authenticated API requests.
+   * When set, all requests include an Authorization: Bearer header.
+   */
+  setAuthToken(token: string | null) {
+    this.authToken = token;
+  }
+
+  private getAuthHeaders(): Record<string, string> {
+    const headers: Record<string, string> = {};
+    if (this.authToken) {
+      headers["Authorization"] = `Bearer ${this.authToken}`;
+    }
+    return headers;
+  }
 
   async chat(req: ChatRequest): Promise<ChatResponse> {
     const res = await fetch(`${this.baseUrl}/api/chat`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...this.getAuthHeaders() },
       body: JSON.stringify(req),
     });
 
@@ -101,7 +118,7 @@ class ApiClient {
   async submitAssessment(req: AssessmentSubmission): Promise<AssessmentResult> {
     const res = await fetch(`${this.baseUrl}/api/assessments`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...this.getAuthHeaders() },
       body: JSON.stringify(req),
     });
 
@@ -122,6 +139,7 @@ class ApiClient {
 
     const res = await fetch(`${this.baseUrl}/api/upload`, {
       method: "POST",
+      headers: { ...this.getAuthHeaders() },
       body: formData,
     });
 
@@ -136,7 +154,7 @@ class ApiClient {
   async generateQuestions(req: GenerateRequest): Promise<GenerateResponse> {
     const res = await fetch(`${this.baseUrl}/api/generate`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...this.getAuthHeaders() },
       body: JSON.stringify(req),
     });
 
@@ -154,13 +172,17 @@ class ApiClient {
     if (params?.ownerId) searchParams.set("ownerId", params.ownerId);
     const qs = searchParams.toString();
 
-    const res = await fetch(`${this.baseUrl}/api/modules${qs ? `?${qs}` : ""}`);
+    const res = await fetch(`${this.baseUrl}/api/modules${qs ? `?${qs}` : ""}`, {
+      headers: { ...this.getAuthHeaders() },
+    });
     if (!res.ok) throw new Error("Failed to load modules");
     return res.json();
   }
 
   async getInsights(moduleId: string) {
-    const res = await fetch(`${this.baseUrl}/api/insights?moduleId=${moduleId}`);
+    const res = await fetch(`${this.baseUrl}/api/insights?moduleId=${moduleId}`, {
+      headers: { ...this.getAuthHeaders() },
+    });
     if (!res.ok) throw new Error("Failed to load insights");
     return res.json();
   }
@@ -168,7 +190,9 @@ class ApiClient {
   async getCheckpoints(moduleId: string, status?: string) {
     const params = new URLSearchParams({ moduleId });
     if (status) params.set("status", status);
-    const res = await fetch(`${this.baseUrl}/api/checkpoints?${params.toString()}`);
+    const res = await fetch(`${this.baseUrl}/api/checkpoints?${params.toString()}`, {
+      headers: { ...this.getAuthHeaders() },
+    });
     if (!res.ok) throw new Error("Failed to load checkpoints");
     return res.json();
   }
@@ -176,7 +200,7 @@ class ApiClient {
   async updateCheckpoint(questionId: string, action: "approve" | "reject" | "edit", updates?: Record<string, unknown>, approvedBy?: string) {
     const res = await fetch(`${this.baseUrl}/api/checkpoints`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...this.getAuthHeaders() },
       body: JSON.stringify({ questionId, action, updates, approvedBy }),
     });
     if (!res.ok) throw new Error("Failed to update checkpoint");

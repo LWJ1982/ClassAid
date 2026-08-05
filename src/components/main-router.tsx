@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useApp } from "./providers";
+import { useAuth } from "./auth/auth-provider";
+import { Login } from "./auth/login";
+import { Signup } from "./auth/signup";
 import { LearnerDashboard } from "./learner/dashboard";
 import { ModuleOverview } from "./learner/module-overview";
 import { GuidedActivity } from "./learner/guided-activity";
@@ -19,8 +22,10 @@ export type InstructorView = "insights" | "configure" | "checkpoints" | "content
 
 export function MainRouter() {
   const { role, assessmentSubmitted, readinessResult } = useApp();
+  const { isDemo, user, isLoading } = useAuth();
   const [learnerView, setLearnerView] = useState<LearnerView>("dashboard");
   const [instructorView, setInstructorView] = useState<InstructorView>("insights");
+  const [authView, setAuthView] = useState<"login" | "signup">("login");
 
   // If assessment was submitted and there's a result, default to report view
   useEffect(() => {
@@ -28,6 +33,26 @@ export function MainRouter() {
       // Don't auto-redirect, let user choose
     }
   }, [assessmentSubmitted, readinessResult, learnerView]);
+
+  // Show loading spinner while checking auth state
+  if (!isDemo && isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center space-y-4">
+          <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto" />
+          <p className="text-sm text-slate-500">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Auth gate: if not demo and not authenticated, show login/signup
+  if (!isDemo && !user) {
+    if (authView === "signup") {
+      return <Signup onToggleLogin={() => setAuthView("login")} />;
+    }
+    return <Login onToggleSignup={() => setAuthView("signup")} />;
+  }
 
   if (role === "instructor") {
     return (

@@ -3,10 +3,12 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useApp } from "./providers";
+import { useAuth } from "./auth/auth-provider";
 import type { Role } from "@/lib/domain/types";
 
 export function Navigation() {
   const { role, setRole, currentUser, resetDemo, hydrated } = useApp();
+  const { isDemo, signOut, user } = useAuth();
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   const roles: { value: Role; label: string; icon: string }[] = [
@@ -46,45 +48,76 @@ export function Navigation() {
               <span className="font-bold text-slate-900 text-lg hidden sm:block">Class AId</span>
             </Link>
 
-            {/* Role switcher - center */}
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="flex items-center bg-slate-100 rounded-lg p-0.5 sm:p-1">
-                {roles.map((r) => (
-                  <button
-                    key={r.value}
-                    onClick={() => setRole(r.value)}
-                    className={`px-2 sm:px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                      role === r.value
-                        ? "bg-white text-blue-700 shadow-sm"
-                        : "text-slate-500 hover:text-slate-700"
-                    }`}
-                  >
-                    <span className="sm:mr-1">{r.icon}</span>
-                    <span className="hidden sm:inline">{r.label}</span>
-                  </button>
-                ))}
+            {/* Role switcher - center (demo mode only) */}
+            {isDemo && (
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="flex items-center bg-slate-100 rounded-lg p-0.5 sm:p-1">
+                  {roles.map((r) => (
+                    <button
+                      key={r.value}
+                      onClick={() => setRole(r.value)}
+                      className={`px-2 sm:px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                        role === r.value
+                          ? "bg-white text-blue-700 shadow-sm"
+                          : "text-slate-500 hover:text-slate-700"
+                      }`}
+                    >
+                      <span className="sm:mr-1">{r.icon}</span>
+                      <span className="hidden sm:inline">{r.label}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* Authenticated user info - center (when not demo) */}
+            {!isDemo && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-slate-600 bg-blue-50 border border-blue-200 rounded-full px-3 py-1 capitalize">
+                  {role}
+                </span>
+              </div>
+            )}
 
             {/* Right side */}
             <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-              <div className="hidden md:flex items-center gap-1 text-xs text-slate-500 bg-amber-50 border border-amber-200 rounded-full px-3 py-1">
-                <span>\u26A0\uFE0F</span>
-                <span>DEMO</span>
-              </div>
-              <div className="hidden lg:block text-xs text-slate-500">
-                {currentUser.name}
-              </div>
-              <button
-                onClick={() => setShowResetConfirm(true)}
-                className="inline-flex items-center px-2 sm:px-3 py-1.5 text-xs font-medium text-slate-500 bg-slate-50 border border-slate-200 rounded-lg hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition-colors"
-                title="Reset demo to fresh state"
-              >
-                <svg className="w-3.5 h-3.5 sm:mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                <span className="hidden sm:inline">Reset</span>
-              </button>
+              {isDemo ? (
+                <>
+                  <div className="hidden md:flex items-center gap-1 text-xs text-slate-500 bg-amber-50 border border-amber-200 rounded-full px-3 py-1">
+                    <span>{"\u26A0\uFE0F"}</span>
+                    <span>DEMO</span>
+                  </div>
+                  <div className="hidden lg:block text-xs text-slate-500">
+                    {currentUser.name}
+                  </div>
+                  <button
+                    onClick={() => setShowResetConfirm(true)}
+                    className="inline-flex items-center px-2 sm:px-3 py-1.5 text-xs font-medium text-slate-500 bg-slate-50 border border-slate-200 rounded-lg hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition-colors"
+                    title="Reset demo to fresh state"
+                  >
+                    <svg className="w-3.5 h-3.5 sm:mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    <span className="hidden sm:inline">Reset</span>
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="hidden lg:block text-xs text-slate-600 font-medium">
+                    {user?.user_metadata?.name ?? user?.email ?? "User"}
+                  </div>
+                  <button
+                    onClick={() => signOut()}
+                    className="inline-flex items-center px-2 sm:px-3 py-1.5 text-xs font-medium text-slate-500 bg-slate-50 border border-slate-200 rounded-lg hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition-colors"
+                    title="Sign out"
+                  >
+                    <svg className="w-3.5 h-3.5 sm:mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    <span className="hidden sm:inline">Sign out</span>
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
