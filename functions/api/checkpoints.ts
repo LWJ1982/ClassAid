@@ -9,10 +9,10 @@ import { checkpointPatchSchema } from '../lib/validation';
 import { extractUser, requireRole } from '../lib/auth';
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
-  const { env } = context;
+  const { request, env } = context;
 
   try {
-    const url = new URL(context.request.url);
+    const url = new URL(request.url);
     const moduleId = url.searchParams.get('moduleId');
 
     if (!moduleId) {
@@ -20,6 +20,22 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     }
 
     const supabase = createSupabaseClient(env);
+
+    // Require instructor/admin role to access checkpoint data (contains correct answers)
+    const user = await extractUser(request, supabase);
+    if (!user) {
+      return Response.json(
+        { error: 'Unauthorized: authentication required' },
+        { status: 401 }
+      );
+    }
+
+    if (!requireRole(user, ['instructor', 'admin'])) {
+      return Response.json(
+        { error: 'Forbidden: insufficient permissions' },
+        { status: 403 }
+      );
+    }
 
     const { data, error } = await supabase
       .from('questions')
