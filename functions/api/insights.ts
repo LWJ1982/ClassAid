@@ -1,33 +1,86 @@
 /**
- * GET /api/insights — Cloudflare Pages Function
+ * GET /api/insights - Cloudflare Pages Function
+ * Instructor analytics and insights
  */
 
-interface Env {
-  DB: D1Database;
-}
+import type { Env } from '../lib/env';
+import { createSupabaseClient } from '../lib/supabase';
+import { insightsQuerySchema } from '../lib/validation';
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const { env } = context;
-  const url = new URL(context.request.url);
-  const moduleId = url.searchParams.get("moduleId");
 
-  if (!moduleId) return Response.json({ error: "moduleId required" }, { status: 400 });
+  try {
+    const url = new URL(context.request.url);
+    const moduleId = url.searchParams.get('moduleId');
 
-  const completed = (await env.DB.prepare("SELECT COUNT(*) as c FROM attempts WHERE module_id = ? AND status = 'scored'").bind(moduleId).first()) as { c: number } | null;
+    const parsed = insightsQuerySchema.safeParse({ moduleId });
+    if (!parsed.success) {
+      return Response.json(
+        { error: parsed.error.issues[0]?.message || 'Invalid query parameters' },
+        { status: 400 }
+      );
+    }
 
-  const distribution = (await env.DB.prepare("SELECT r.status, COUNT(*) as count FROM results r JOIN attempts a ON r.attempt_id = a.id WHERE a.module_id = ? GROUP BY r.status").bind(moduleId).all()).results;
+    const supabase = createSupabaseClient(env);
 
-  const dist: Record<string, number> = { READY: 0, REVIEW_REQUIRED: 0, FURTHER_PREPARATION: 0, ESCALATE: 0 };
-  for (const row of distribution as Record<string, unknown>[]) {
-    dist[row.status as string] = row.count as number;
+    // Count completed (scored) attempts
+    const { count: completedCount, error: countError } = await supabase
+      .from('attempts')
+      .select('*', { count: 'exact', head: true })
+      .eq('module_id', parsed.data.moduleId)
+      .eq('status', 'scored');
+
+    if (countError) {
+      console.error('Attempts count error:', countError.message);
+      return Response.json(
+        { error: 'Database service temporarily unavailable' },
+        { status: 503 }
+      );
+    }
+
+    // Get readiness distribution from results
+    const { data: results, error: resultsError } = await supabase
+      .from('results')
+      .select('status, attempts!inner(module_id)')
+      .eq('attempts.module_id', parsed.data.moduleId);
+
+    if (resultsError) {
+      console.error('Results query error:', resultsError.message);
+      return Response.json(
+        { error: 'Database service temporarily unavailable' },
+        { status: 503 }
+      );
+    }
+
+    const dist: Record<string, number> = {
+      READY: 0,
+      REVIEW_REQUIRED: 0,
+      FURTHER_PREPARATION: 0,
+      ESCALATE: 0,
+    };
+
+    for (const row of results || []) {
+      if (row.status in dist) {
+        dist[row.status]++;
+      }
+    }
+
+    const completed = completedCount || 0;
+
+    return Response.json({
+      moduleId: parsed.data.moduleId,
+      assigned: 30,
+      started: 27,
+      completed,
+      completionRate: completed > 0 ? completed / 30 : 0,
+      readinessDistribution: dist,
+    });
+  } catch (error) {
+    console.error('Insights error:', error);
+    return Response.json(
+      { error: 'Service temporarily unavailable' },
+      { status: 503 }
+    );
   }
-
-  return Response.json({
-    moduleId,
-    assigned: 30,
-    started: 27,
-    completed: completed?.c || 0,
-    completionRate: completed?.c ? (completed.c / 30) : 0,
-    readinessDistribution: dist,
-  });
 };

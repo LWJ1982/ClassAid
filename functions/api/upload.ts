@@ -1,117 +1,156 @@
 /**
- * POST /api/upload — Cloudflare Pages Function
- * File upload → R2 → chunk → embed → Vectorize
+ * POST /api/upload - Cloudflare Pages Function
+ * File upload -> Supabase Storage -> chunk -> embed via Workers AI -> store in pgvector
  */
 
-interface Env {
-  DB: D1Database;
-  BUCKET: R2Bucket;
-  AI: Ai;
-  VECTORIZE: VectorizeIndex;
-}
+import type { Env } from '../lib/env';
+import { createSupabaseClient } from '../lib/supabase';
+import { generateEmbedding } from '../lib/embeddings';
+import { uploadFieldsSchema } from '../lib/validation';
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
 
   try {
     const formData = await request.formData();
-    const file = formData.get("file") as File | null;
-    const moduleId = formData.get("moduleId") as string | null;
-    const uploadedBy = formData.get("uploadedBy") as string | null;
-    const sourceTitle = formData.get("sourceTitle") as string | null;
+    const file = formData.get('file') as File | null;
+    const moduleId = formData.get('moduleId') as string | null;
+    const uploadedBy = formData.get('uploadedBy') as string | null;
+    const sourceTitle = formData.get('sourceTitle') as string | null;
 
-    if (!file || !moduleId || !uploadedBy) {
-      return Response.json({ error: "file, moduleId, and uploadedBy are required" }, { status: 400 });
+    // Validate fields
+    const parsed = uploadFieldsSchema.safeParse({ moduleId, uploadedBy, sourceTitle });
+    if (!parsed.success) {
+      return Response.json(
+        { error: parsed.error.issues[0]?.message || 'Invalid request fields' },
+        { status: 400 }
+      );
+    }
+
+    if (!file) {
+      return Response.json({ error: 'file is required' }, { status: 400 });
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      return Response.json({ error: "File size exceeds 10MB limit" }, { status: 400 });
+      return Response.json(
+        { error: 'File size exceeds 10MB limit' },
+        { status: 400 }
+      );
     }
 
+    const supabase = createSupabaseClient(env);
     const sourceId = crypto.randomUUID();
-    const r2Key = `modules/${moduleId}/sources/${sourceId}/${file.name}`;
+    const storagePath = `modules/${parsed.data.moduleId}/sources/${sourceId}/${file.name}`;
 
-    // Store in R2
+    // Upload to Supabase Storage
     const fileBuffer = await file.arrayBuffer();
-    await env.BUCKET.put(r2Key, fileBuffer, {
-      httpMetadata: { contentType: file.type },
-      customMetadata: { moduleId, uploadedBy, originalFilename: file.name },
-    });
+    const { error: storageError } = await supabase.storage
+      .from('source-files')
+      .upload(storagePath, fileBuffer, {
+        contentType: file.type,
+        upsert: false,
+      });
+
+    if (storageError) {
+      console.error('Storage upload error:', storageError.message);
+      return Response.json(
+        { error: 'File storage service temporarily unavailable' },
+        { status: 503 }
+      );
+    }
 
     // Extract text
     const textContent = await file.text();
     if (textContent.trim().length < 50) {
-      return Response.json({ error: "File contains insufficient text content" }, { status: 400 });
+      return Response.json(
+        { error: 'File contains insufficient text content' },
+        { status: 400 }
+      );
     }
 
-    // Record source
-    await env.DB.prepare(
-      "INSERT INTO sources (id, module_id, filename, r2_key, content_type, file_size, status, uploaded_by) VALUES (?, ?, ?, ?, ?, ?, 'processing', ?)"
-    ).bind(sourceId, moduleId, file.name, r2Key, file.type, file.size, uploadedBy).run();
+    // Record source in database
+    const { error: sourceError } = await supabase.from('sources').insert({
+      id: sourceId,
+      module_id: parsed.data.moduleId,
+      filename: file.name,
+      storage_path: storagePath,
+      content_type: file.type,
+      file_size: file.size,
+      status: 'processing',
+      uploaded_by: parsed.data.uploadedBy,
+    });
 
-    // Chunk text
-    const paragraphs = textContent.split(/\n\n+/).filter(p => p.trim().length > 0);
+    if (sourceError) {
+      console.error('Source insert error:', sourceError.message);
+      return Response.json(
+        { error: 'Database service temporarily unavailable' },
+        { status: 503 }
+      );
+    }
+
+    // Chunk text (paragraph-based)
+    const paragraphs = textContent.split(/\n\n+/).filter((p) => p.trim().length > 0);
     const chunks: { content: string; index: number }[] = [];
-    let currentChunk = "";
+    let currentChunk = '';
     let chunkIndex = 0;
 
     for (const para of paragraphs) {
-      if ((currentChunk + "\n\n" + para).length > 800 && currentChunk.length > 0) {
+      if ((currentChunk + '\n\n' + para).length > 800 && currentChunk.length > 0) {
         chunks.push({ content: currentChunk.trim(), index: chunkIndex++ });
         currentChunk = para;
       } else {
-        currentChunk = currentChunk ? currentChunk + "\n\n" + para : para;
+        currentChunk = currentChunk ? currentChunk + '\n\n' + para : para;
       }
     }
-    if (currentChunk.trim()) chunks.push({ content: currentChunk.trim(), index: chunkIndex });
+    if (currentChunk.trim()) {
+      chunks.push({ content: currentChunk.trim(), index: chunkIndex });
+    }
 
-    // Embed and store
-    const title = sourceTitle || file.name.replace(/\.[^.]+$/, "");
-    const vectors: VectorizeVector[] = [];
+    // Embed and store each chunk
+    const title = parsed.data.sourceTitle || file.name.replace(/\.[^.]+$/, '');
 
     for (const chunk of chunks) {
       const chunkId = crypto.randomUUID();
-      const embResult = await env.AI.run("@cf/baai/bge-base-en-v1.5", { text: chunk.content }) as { data: number[][] };
 
-      vectors.push({
-        id: chunkId,
-        values: embResult.data[0],
-        metadata: {
-          source_id: sourceId,
-          source_title: title,
-          filename: file.name,
-          section: `Section ${chunk.index + 1}`,
-          chunk_index: chunk.index,
-          module_id: moduleId,
-          content: chunk.content.substring(0, 500),
-          version: "1.0",
-        },
-      });
-
-      await env.DB.prepare(
-        "INSERT INTO source_chunks (id, source_id, module_id, chunk_index, content, section, vector_id) VALUES (?, ?, ?, ?, ?, ?, ?)"
-      ).bind(chunkId, sourceId, moduleId, chunk.index, chunk.content, `Section ${chunk.index + 1}`, chunkId).run();
-    }
-
-    // Batch insert vectors
-    if (vectors.length > 0) {
-      for (let i = 0; i < vectors.length; i += 100) {
-        await env.VECTORIZE.upsert(vectors.slice(i, i + 100));
+      let embedding: number[];
+      try {
+        embedding = await generateEmbedding(env.AI, chunk.content);
+      } catch (error) {
+        console.error(`Embedding error for chunk ${chunk.index}:`, error);
+        continue;
       }
+
+      const vectorString = `[${embedding.join(',')}]`;
+
+      await supabase.from('source_chunks').insert({
+        id: chunkId,
+        source_id: sourceId,
+        module_id: parsed.data.moduleId,
+        chunk_index: chunk.index,
+        content: chunk.content,
+        section: `${title} - Section ${chunk.index + 1}`,
+        embedding: vectorString,
+      });
     }
 
     // Update source status
-    await env.DB.prepare("UPDATE sources SET status = 'indexed', chunk_count = ? WHERE id = ?").bind(chunks.length, sourceId).run();
+    await supabase
+      .from('sources')
+      .update({ status: 'indexed', chunk_count: chunks.length })
+      .eq('id', sourceId);
 
     return Response.json({
       sourceId,
       filename: file.name,
-      status: "indexed",
+      status: 'indexed',
       chunkCount: chunks.length,
       message: `File processed successfully. ${chunks.length} chunks indexed for retrieval.`,
     });
   } catch (error) {
-    console.error("Upload error:", error);
-    return Response.json({ error: "Failed to process file" }, { status: 500 });
+    console.error('Upload error:', error);
+    return Response.json(
+      { error: 'Service temporarily unavailable' },
+      { status: 503 }
+    );
   }
 };

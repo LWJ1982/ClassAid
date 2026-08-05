@@ -1,64 +1,144 @@
 /**
- * POST /api/generate — Cloudflare Pages Function
- * AI question generation from module content
+ * POST /api/generate - Cloudflare Pages Function
+ * AI question generation from module content using Groq
  */
 
-interface Env {
-  DB: D1Database;
-  AI: Ai;
-}
+import type { Env } from '../lib/env';
+import { createSupabaseClient } from '../lib/supabase';
+import { callGroq, GroqError } from '../lib/groq';
+import { generateRequestSchema } from '../lib/validation';
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
 
   try {
-    const body = await request.json() as { moduleId?: string; requestedBy?: string; questionKind?: string };
-    const { moduleId, requestedBy, questionKind = "checkpoint" } = body;
+    const body = await request.json();
 
-    if (!moduleId || !requestedBy) {
-      return Response.json({ error: "moduleId and requestedBy are required" }, { status: 400 });
+    const parsed = generateRequestSchema.safeParse(body);
+    if (!parsed.success) {
+      return Response.json(
+        { error: parsed.error.issues[0]?.message || 'Invalid request body' },
+        { status: 400 }
+      );
     }
 
-    const activities = await env.DB.prepare("SELECT * FROM activities WHERE module_id = ? ORDER BY sequence").bind(moduleId).all();
-    const chunks = await env.DB.prepare("SELECT content, section FROM source_chunks WHERE module_id = ? ORDER BY chunk_index").bind(moduleId).all();
+    const { moduleId, requestedBy, questionKind } = parsed.data;
+    const supabase = createSupabaseClient(env);
 
-    const sourceContext = chunks.results.map((c: Record<string, unknown>) => `[${c.section}]\n${c.content}`).join("\n\n").substring(0, 4000);
+    // Load activities
+    const { data: activities, error: activitiesError } = await supabase
+      .from('activities')
+      .select('*')
+      .eq('module_id', moduleId)
+      .order('sequence', { ascending: true });
+
+    if (activitiesError) {
+      console.error('Activities query error:', activitiesError.message);
+      return Response.json(
+        { error: 'Database service temporarily unavailable' },
+        { status: 503 }
+      );
+    }
+
+    // Load source chunks for context
+    const { data: chunks, error: chunksError } = await supabase
+      .from('source_chunks')
+      .select('content, section')
+      .eq('module_id', moduleId)
+      .order('chunk_index', { ascending: true });
+
+    if (chunksError) {
+      console.error('Chunks query error:', chunksError.message);
+    }
+
+    const sourceContext = (chunks || [])
+      .map((c) => `[${c.section || 'Section'}]\n${c.content}`)
+      .join('\n\n')
+      .substring(0, 4000);
+
     const generatedQuestions: { id: string; questionText: string; status: string }[] = [];
 
-    for (const activity of activities.results as Record<string, unknown>[]) {
+    for (const activity of activities || []) {
       const prompt = `Generate ONE multiple-choice comprehension question for this activity.
 
 Activity: "${activity.title}"
-Content: "${(activity.content as string).substring(0, 500)}"
+Content: "${activity.content.substring(0, 500)}"
 
 Source material: ${sourceContext.substring(0, 1500)}
 
 Respond ONLY with JSON: {"questionText":"...","options":["A","B","C","D"],"correctAnswer":"exact option text","explanation":"...","failureHint":"..."}`;
 
       try {
-        const result = await env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
+        const result = await callGroq(env.GROQ_API_KEY, {
           messages: [
-            { role: "system", content: "Generate educational questions. Respond with valid JSON only." },
-            { role: "user", content: prompt },
+            {
+              role: 'system',
+              content: 'Generate educational questions. Respond with valid JSON only.',
+            },
+            { role: 'user', content: prompt },
           ],
-          max_tokens: 600,
           temperature: 0.4,
-        }) as { response: string };
+          maxTokens: 600,
+        });
 
-        const jsonMatch = result.response.match(/\{[\s\S]*\}/);
+        // Parse JSON from response
+        const jsonMatch = result.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
-          const parsed = JSON.parse(jsonMatch[0]);
-          if (parsed.questionText && parsed.options && parsed.correctAnswer) {
-            const qId = crypto.randomUUID();
-            await env.DB.prepare(
-              `INSERT INTO questions (id, module_id, competency_id, question_text, question_type, options, correct_answer, explanation, critical, question_kind, activity_id, approval_status, failure_hint, min_read_seconds, generated_at)
-               VALUES (?, ?, ?, ?, 'multiple-choice', ?, ?, ?, 0, ?, ?, 'auto_generated', ?, 25, datetime('now'))`
-            ).bind(qId, moduleId, activity.competency_id, parsed.questionText, JSON.stringify(parsed.options), parsed.correctAnswer, parsed.explanation || "", questionKind, activity.id, parsed.failureHint || "").run();
+          const questionData = JSON.parse(jsonMatch[0]) as {
+            questionText?: string;
+            options?: string[];
+            correctAnswer?: string;
+            explanation?: string;
+            failureHint?: string;
+          };
 
-            generatedQuestions.push({ id: qId, questionText: parsed.questionText, status: "auto_generated" });
+          // Validate required fields
+          if (
+            questionData.questionText &&
+            questionData.options &&
+            Array.isArray(questionData.options) &&
+            questionData.options.length === 4 &&
+            questionData.correctAnswer &&
+            questionData.options.includes(questionData.correctAnswer)
+          ) {
+            const qId = crypto.randomUUID();
+
+            const { error: insertError } = await supabase.from('questions').insert({
+              id: qId,
+              module_id: moduleId,
+              competency_id: activity.competency_id,
+              question_text: questionData.questionText,
+              question_type: 'multiple-choice',
+              options: questionData.options,
+              correct_answer: questionData.correctAnswer,
+              explanation: questionData.explanation || '',
+              critical: false,
+              question_kind: questionKind,
+              activity_id: activity.id,
+              approval_status: 'auto_generated',
+              failure_hint: questionData.failureHint || '',
+              min_read_seconds: 25,
+              generated_at: new Date().toISOString(),
+            });
+
+            if (!insertError) {
+              generatedQuestions.push({
+                id: qId,
+                questionText: questionData.questionText,
+                status: 'auto_generated',
+              });
+            } else {
+              console.error('Question insert error:', insertError.message);
+            }
           }
+          // Discard malformed output silently (per AI boundaries)
         }
-      } catch { /* continue */ }
+      } catch (error) {
+        if (error instanceof GroqError) {
+          console.error(`Groq error for activity ${activity.id}:`, error.message);
+        }
+        // Continue generating for other activities
+      }
     }
 
     return Response.json({
@@ -67,7 +147,10 @@ Respond ONLY with JSON: {"questionText":"...","options":["A","B","C","D"],"corre
       message: `${generatedQuestions.length} questions generated and pending instructor approval.`,
     });
   } catch (error) {
-    console.error("Generate error:", error);
-    return Response.json({ error: "Generation failed" }, { status: 500 });
+    console.error('Generate error:', error);
+    return Response.json(
+      { error: 'Service temporarily unavailable' },
+      { status: 503 }
+    );
   }
 };

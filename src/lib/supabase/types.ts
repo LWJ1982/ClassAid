@@ -1,6 +1,7 @@
 /**
  * Supabase Database Type Definitions
  * Matches the PostgreSQL schema in supabase/migrations/0001_initial_schema.sql
+ * Compatible with @supabase/supabase-js v2.112+ GenericSchema
  */
 
 export type Json =
@@ -36,6 +37,7 @@ export interface Database {
           role?: 'learner' | 'instructor' | 'admin';
           created_at?: string;
         };
+        Relationships: [];
       };
       domains: {
         Row: {
@@ -59,6 +61,7 @@ export interface Database {
           compliance_label?: string;
           created_at?: string;
         };
+        Relationships: [];
       };
       modules: {
         Row: {
@@ -100,6 +103,22 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: 'modules_domain_id_fkey';
+            columns: ['domain_id'];
+            isOneToOne: false;
+            referencedRelation: 'domains';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'modules_owner_id_fkey';
+            columns: ['owner_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       competencies: {
         Row: {
@@ -135,6 +154,15 @@ export interface Database {
           critical?: boolean;
           sequence?: number;
         };
+        Relationships: [
+          {
+            foreignKeyName: 'competencies_module_id_fkey';
+            columns: ['module_id'];
+            isOneToOne: false;
+            referencedRelation: 'modules';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       activities: {
         Row: {
@@ -170,6 +198,22 @@ export interface Database {
           warning?: string | null;
           competency_id?: string | null;
         };
+        Relationships: [
+          {
+            foreignKeyName: 'activities_module_id_fkey';
+            columns: ['module_id'];
+            isOneToOne: false;
+            referencedRelation: 'modules';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'activities_competency_id_fkey';
+            columns: ['competency_id'];
+            isOneToOne: false;
+            referencedRelation: 'competencies';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       questions: {
         Row: {
@@ -235,6 +279,29 @@ export interface Database {
           approved_at?: string | null;
           created_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: 'questions_module_id_fkey';
+            columns: ['module_id'];
+            isOneToOne: false;
+            referencedRelation: 'modules';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'questions_competency_id_fkey';
+            columns: ['competency_id'];
+            isOneToOne: false;
+            referencedRelation: 'competencies';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'questions_activity_id_fkey';
+            columns: ['activity_id'];
+            isOneToOne: false;
+            referencedRelation: 'activities';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       sources: {
         Row: {
@@ -273,6 +340,15 @@ export interface Database {
           uploaded_by?: string;
           uploaded_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: 'sources_module_id_fkey';
+            columns: ['module_id'];
+            isOneToOne: false;
+            referencedRelation: 'modules';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       source_chunks: {
         Row: {
@@ -308,6 +384,22 @@ export interface Database {
           embedding?: string | null;
           created_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: 'source_chunks_source_id_fkey';
+            columns: ['source_id'];
+            isOneToOne: false;
+            referencedRelation: 'sources';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'source_chunks_module_id_fkey';
+            columns: ['module_id'];
+            isOneToOne: false;
+            referencedRelation: 'modules';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       attempts: {
         Row: {
@@ -340,6 +432,22 @@ export interface Database {
           status?: 'in_progress' | 'submitted' | 'scored';
           overall_score?: number | null;
         };
+        Relationships: [
+          {
+            foreignKeyName: 'attempts_learner_id_fkey';
+            columns: ['learner_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'attempts_module_id_fkey';
+            columns: ['module_id'];
+            isOneToOne: false;
+            referencedRelation: 'modules';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       attempt_answers: {
         Row: {
@@ -366,6 +474,22 @@ export interface Database {
           is_correct?: boolean;
           is_critical_failure?: boolean;
         };
+        Relationships: [
+          {
+            foreignKeyName: 'attempt_answers_attempt_id_fkey';
+            columns: ['attempt_id'];
+            isOneToOne: false;
+            referencedRelation: 'attempts';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'attempt_answers_question_id_fkey';
+            columns: ['question_id'];
+            isOneToOne: false;
+            referencedRelation: 'questions';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       results: {
         Row: {
@@ -404,6 +528,15 @@ export interface Database {
           remediation?: Json | null;
           created_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: 'results_attempt_id_fkey';
+            columns: ['attempt_id'];
+            isOneToOne: false;
+            referencedRelation: 'attempts';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       checkpoint_progress: {
         Row: {
@@ -442,6 +575,22 @@ export interface Database {
           time_spent_seconds?: number;
           completed_at?: string | null;
         };
+        Relationships: [
+          {
+            foreignKeyName: 'checkpoint_progress_learner_id_fkey';
+            columns: ['learner_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'checkpoint_progress_activity_id_fkey';
+            columns: ['activity_id'];
+            isOneToOne: false;
+            referencedRelation: 'activities';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       conversations: {
         Row: {
@@ -465,6 +614,22 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: 'conversations_learner_id_fkey';
+            columns: ['learner_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'conversations_module_id_fkey';
+            columns: ['module_id'];
+            isOneToOne: false;
+            referencedRelation: 'modules';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       messages: {
         Row: {
@@ -500,6 +665,15 @@ export interface Database {
           escalate?: boolean | null;
           created_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: 'messages_conversation_id_fkey';
+            columns: ['conversation_id'];
+            isOneToOne: false;
+            referencedRelation: 'conversations';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       audit_events: {
         Row: {
@@ -532,8 +706,10 @@ export interface Database {
           details?: string | null;
           created_at?: string;
         };
+        Relationships: [];
       };
     };
+    Views: Record<string, never>;
     Functions: {
       match_source_chunks: {
         Args: {
