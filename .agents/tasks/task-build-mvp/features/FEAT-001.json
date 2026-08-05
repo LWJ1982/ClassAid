@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "chore",
   "description": "Environment setup and baseline verification. Install additional dependencies needed for the MVP (Supabase JS client, Vitest). Confirm existing build and typecheck pass. Fix any pre-existing issues.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Add dependencies to package.json: @supabase/supabase-js (client-side and server-side Supabase access), vitest and @testing-library/react for testing",
     "Run pnpm install to confirm all deps resolve",
@@ -24,5 +24,5 @@
     "pnpm run test -- --run (should exit cleanly even with no test files)"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "eslint-config-next 15.5.2 exports legacy eslintrc-format objects (not flat config arrays), so spreading them directly fails. Fixed by using @eslint/eslintrc FlatCompat to bridge the legacy configs into flat config format. Also removed an invalid eslint-disable comment referencing non-existent rule 'react-hooks/set-state-in-effect' in providers.tsx. Added vitest.config.ts with passWithNoTests to allow test command to exit cleanly when no test files exist yet."
 }
