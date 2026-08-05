@@ -6,6 +6,7 @@
 import type { Env } from '../lib/env';
 import { createSupabaseClient } from '../lib/supabase';
 import { checkpointPatchSchema } from '../lib/validation';
+import { extractUser } from '../lib/auth';
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const { env } = context;
@@ -70,12 +71,23 @@ export const onRequestPatch: PagesFunction<Env> = async (context) => {
     const { questionId, action, approvedBy } = parsed.data;
     const supabase = createSupabaseClient(env);
 
+    // Extract user identity from JWT or fall back to body field in demo mode
+    const user = await extractUser(request, supabase, approvedBy);
+    if (!user) {
+      return Response.json(
+        { error: 'Unauthorized: invalid or expired token' },
+        { status: 401 }
+      );
+    }
+
+    const authenticatedUserId = user.id;
+
     if (action === 'approve') {
       const { error } = await supabase
         .from('questions')
         .update({
           approval_status: 'approved',
-          approved_by: approvedBy || 'unknown',
+          approved_by: authenticatedUserId,
           approved_at: new Date().toISOString(),
         })
         .eq('id', questionId);

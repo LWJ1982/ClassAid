@@ -7,6 +7,7 @@ import type { Env } from '../lib/env';
 import { createSupabaseClient } from '../lib/supabase';
 import { callGroq, GroqError } from '../lib/groq';
 import { generateRequestSchema } from '../lib/validation';
+import { extractUser } from '../lib/auth';
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
@@ -24,6 +25,15 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
     const { moduleId, requestedBy, questionKind } = parsed.data;
     const supabase = createSupabaseClient(env);
+
+    // Extract user identity from JWT or fall back to body field in demo mode
+    const user = await extractUser(request, supabase, requestedBy);
+    if (!user) {
+      return Response.json(
+        { error: 'Unauthorized: invalid or expired token' },
+        { status: 401 }
+      );
+    }
 
     // Load activities
     const { data: activities, error: activitiesError } = await supabase

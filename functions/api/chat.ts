@@ -9,6 +9,59 @@ import { createSupabaseClient } from '../lib/supabase';
 import { generateEmbedding } from '../lib/embeddings';
 import { callGroq, GroqError } from '../lib/groq';
 import { chatRequestSchema } from '../lib/validation';
+import { extractUser } from '../lib/auth';
+
+type CoachCategory = 'CONCEPT' | 'PROCEDURE' | 'COMPLIANCE' | 'TROUBLESHOOTING' | 'APPLICATION' | 'OUT_OF_SCOPE';
+
+/**
+ * Classify the user message into a coaching category using keyword matching.
+ * This provides a simple, deterministic classification without requiring an extra LLM call.
+ */
+function classifyMessage(message: string): CoachCategory {
+  const lower = message.toLowerCase();
+
+  // PROCEDURE: how-to, steps, process, instructions
+  const procedureKeywords = [
+    'how do i', 'how to', 'steps', 'step by step', 'procedure', 'process',
+    'instructions', 'guide me', 'walk me through', 'sequence', 'workflow',
+  ];
+  if (procedureKeywords.some((kw) => lower.includes(kw))) {
+    return 'PROCEDURE';
+  }
+
+  // COMPLIANCE: safety, rules, regulations, compliance, policy
+  const complianceKeywords = [
+    'safety', 'safe', 'rule', 'rules', 'regulation', 'compliance',
+    'policy', 'policies', 'requirement', 'mandatory', 'must not',
+    'prohibited', 'legal', 'standard', 'guideline', 'hazard', 'risk',
+  ];
+  if (complianceKeywords.some((kw) => lower.includes(kw))) {
+    return 'COMPLIANCE';
+  }
+
+  // TROUBLESHOOTING: error, problem, issue, fix, debug, not working
+  const troubleshootingKeywords = [
+    'error', 'problem', 'issue', 'fix', 'debug', 'not working',
+    'broken', 'fail', 'failed', 'wrong', 'troubleshoot', 'diagnose',
+    'doesn\'t work', 'won\'t work', 'crash', 'bug',
+  ];
+  if (troubleshootingKeywords.some((kw) => lower.includes(kw))) {
+    return 'TROUBLESHOOTING';
+  }
+
+  // APPLICATION: apply, example, scenario, use case, practice, real-world
+  const applicationKeywords = [
+    'apply', 'application', 'example', 'scenario', 'use case',
+    'practice', 'real-world', 'real world', 'in practice', 'demonstrate',
+    'when would', 'when should',
+  ];
+  if (applicationKeywords.some((kw) => lower.includes(kw))) {
+    return 'APPLICATION';
+  }
+
+  // Default to CONCEPT for general knowledge questions
+  return 'CONCEPT';
+}
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
@@ -26,6 +79,20 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
     const { moduleId, message, conversationId, learnerId } = parsed.data;
     const supabase = createSupabaseClient(env);
+
+    // Extract user identity from JWT or fall back to body field in demo mode
+    const user = await extractUser(request, supabase, learnerId);
+    if (!user) {
+      return Response.json(
+        { error: 'Unauthorized: invalid or expired token' },
+        { status: 401 }
+      );
+    }
+
+    const authenticatedLearnerId = user.id;
+
+    // Classify the user's message
+    const category: CoachCategory = classifyMessage(message);
 
     // 1. Embed the user question via Workers AI
     let queryVector: number[];
@@ -139,7 +206,7 @@ ${contextParts.join('\n\n')}
 
     // 8. Determine grounding level
     const avgScore =
-      chunks.reduce((s, c) => s + c.similarity, 0) / chunks.length;
+      chunks.reduce((s: number, c: { similarity: number }) => s + c.similarity, 0) / chunks.length;
     const grounding =
       avgScore > 0.75
         ? 'SUPPORTED'
@@ -149,12 +216,12 @@ ${contextParts.join('\n\n')}
 
     // 9. Persist conversation
     const convId = conversationId || crypto.randomUUID();
-    if (learnerId) {
+    if (authenticatedLearnerId) {
       try {
         if (!conversationId) {
           await supabase.from('conversations').insert({
             id: convId,
-            learner_id: learnerId,
+            learner_id: authenticatedLearnerId,
             module_id: moduleId,
           });
         }
@@ -169,7 +236,7 @@ ${contextParts.join('\n\n')}
           conversation_id: convId,
           role: 'assistant',
           content: llmResponse,
-          category: 'CONCEPT',
+          category,
           grounding,
           citations,
           escalate: grounding === 'INSUFFICIENT',
@@ -181,7 +248,7 @@ ${contextParts.join('\n\n')}
 
     return Response.json({
       answer: llmResponse,
-      category: 'CONCEPT',
+      category,
       citations,
       grounding,
       recommendedAction: `Review ${citations[0]?.section || 'the module material'} for more detail.`,

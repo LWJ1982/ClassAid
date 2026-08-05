@@ -8,5 +8,5 @@
     "skipLibCheck": true,
     "types": ["@cloudflare/workers-types"]
   },
-  "include": ["./**/*.ts", "../src/lib/supabase/types.ts", "../src/lib/supabase/server.ts"]
+  "include": ["./**/*.ts", "../src/lib/supabase/types.ts", "../src/lib/supabase/server.ts", "../src/lib/engine/readiness-engine.ts", "../src/lib/domain/types.ts"]
 }

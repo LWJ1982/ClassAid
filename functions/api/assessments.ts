@@ -1,11 +1,19 @@
 /**
  * POST /api/assessments - Cloudflare Pages Function
  * Server-side deterministic scoring with critical-rule engine
+ * Uses shared readiness engine for single source of truth
  */
 
 import type { Env } from '../lib/env';
 import { createSupabaseClient } from '../lib/supabase';
 import { assessmentRequestSchema } from '../lib/validation';
+import { extractUser } from '../lib/auth';
+import { calculateReadiness } from '../../src/lib/engine/readiness-engine';
+import type {
+  AssessmentQuestion,
+  AttemptAnswer,
+  Competency,
+} from '../../src/lib/domain/types';
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
@@ -24,6 +32,17 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const { moduleId, learnerId, answers } = parsed.data;
     const supabase = createSupabaseClient(env);
 
+    // Extract user identity from JWT or fall back to body field in demo mode
+    const user = await extractUser(request, supabase, learnerId);
+    if (!user) {
+      return Response.json(
+        { error: 'Unauthorized: invalid or expired token' },
+        { status: 401 }
+      );
+    }
+
+    const authenticatedLearnerId = user.id;
+
     // Load module
     const { data: moduleRecord, error: moduleError } = await supabase
       .from('modules')
@@ -34,6 +53,32 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
     if (moduleError || !moduleRecord) {
       return Response.json({ error: 'Module not found' }, { status: 404 });
+    }
+
+    // Idempotency check: reject if a scored attempt already exists for this learner+module+version
+    const { data: existingAttempt, error: existingError } = await supabase
+      .from('attempts')
+      .select('id')
+      .eq('learner_id', authenticatedLearnerId)
+      .eq('module_id', moduleId)
+      .eq('module_version', moduleRecord.version)
+      .eq('status', 'scored')
+      .limit(1)
+      .maybeSingle();
+
+    if (existingError) {
+      console.error('Idempotency check error:', existingError.message);
+      return Response.json(
+        { error: 'Database service temporarily unavailable' },
+        { status: 503 }
+      );
+    }
+
+    if (existingAttempt) {
+      return Response.json(
+        { error: 'Assessment already submitted for this module version' },
+        { status: 409 }
+      );
     }
 
     // Load approved assessment questions
@@ -71,83 +116,65 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       }
     }
 
-    // Score answers deterministically
+    // Map database records to domain types for the shared engine
+    const engineQuestions: AssessmentQuestion[] = (questions || []).map((q) => ({
+      id: q.id,
+      moduleVersionId: moduleId,
+      competencyId: q.competency_id || '',
+      questionText: q.question_text,
+      questionType: (q.question_type || 'multiple-choice') as 'multiple-choice' | 'true-false',
+      options: q.options as string[],
+      correctAnswer: q.correct_answer,
+      explanation: q.explanation || '',
+      critical: q.critical,
+      sourceReference: '',
+    }));
+
+    const engineCompetencies: Competency[] = (competencies || []).map((c) => ({
+      id: c.id,
+      moduleVersionId: moduleId,
+      name: c.name,
+      description: '',
+      weight: c.weight,
+      minimumThreshold: c.min_threshold,
+      mandatory: c.mandatory,
+      critical: c.critical,
+    }));
+
+    // Score answers deterministically using the question data
     const attemptId = crypto.randomUUID();
-    const attemptAnswers = answers.map((a) => {
-      const q = (questions || []).find((qq) => qq.id === a.questionId);
-      const isCorrect = q ? a.selectedAnswer === q.correct_answer : false;
+    const engineAnswers: AttemptAnswer[] = answers.map((a) => {
+      const q = engineQuestions.find((qq) => qq.id === a.questionId);
+      const isCorrect = q ? a.selectedAnswer === q.correctAnswer : false;
       const isCriticalFailure = q ? q.critical && !isCorrect : false;
       return {
         id: crypto.randomUUID(),
+        attemptId,
         questionId: a.questionId,
-        selected: a.selectedAnswer,
+        selectedAnswer: a.selectedAnswer,
         isCorrect,
         isCriticalFailure,
       };
     });
 
-    // Competency scores
-    const competencyScores = (competencies || []).map((comp) => {
-      const compQs = (questions || []).filter((q) => q.competency_id === comp.id);
-      const compAs = attemptAnswers.filter((a) =>
-        compQs.some((q) => q.id === a.questionId)
-      );
-      const score =
-        compQs.length > 0
-          ? compAs.filter((a) => a.isCorrect).length / compQs.length
-          : 0;
-      return {
-        competencyId: comp.id,
-        competencyName: comp.name,
-        score,
-        threshold: comp.min_threshold,
-        passed: score >= comp.min_threshold,
-        mandatory: comp.mandatory,
-        critical: comp.critical,
-      };
+    // Use the shared readiness engine for scoring
+    const result = calculateReadiness({
+      attemptId,
+      questions: engineQuestions,
+      answers: engineAnswers,
+      competencies: engineCompetencies,
+      overallThreshold: moduleRecord.overall_threshold,
     });
-
-    // Overall weighted score
-    const totalWeight = (competencies || []).reduce((s, c) => s + c.weight, 0);
-    const overallScore =
-      totalWeight > 0
-        ? (competencies || []).reduce((s, c) => {
-            const cs = competencyScores.find((x) => x.competencyId === c.id);
-            return s + (cs?.score ?? 0) * c.weight;
-          }, 0) / totalWeight
-        : 0;
-
-    // Critical failures
-    const criticalFailures = attemptAnswers
-      .filter((a) => a.isCriticalFailure)
-      .map((a) => {
-        const q = (questions || []).find((qq) => qq.id === a.questionId);
-        const c = (competencies || []).find((cc) => cc.id === q?.competency_id);
-        return c?.name || 'Critical failure';
-      });
-
-    // Determine readiness status (deterministic, AI cannot influence)
-    const threshold = moduleRecord.overall_threshold;
-    let status: 'READY' | 'REVIEW_REQUIRED' | 'FURTHER_PREPARATION' | 'ESCALATE';
-    if (criticalFailures.length > 0) {
-      status = 'REVIEW_REQUIRED';
-    } else if (competencyScores.some((cs) => cs.mandatory && !cs.passed)) {
-      status = overallScore < threshold * 0.6 ? 'FURTHER_PREPARATION' : 'REVIEW_REQUIRED';
-    } else if (overallScore >= threshold) {
-      status = 'READY';
-    } else {
-      status = overallScore >= threshold * 0.75 ? 'REVIEW_REQUIRED' : 'FURTHER_PREPARATION';
-    }
 
     // Persist attempt
     const { error: attemptError } = await supabase.from('attempts').insert({
       id: attemptId,
-      learner_id: learnerId,
+      learner_id: authenticatedLearnerId,
       module_id: moduleId,
       module_version: moduleRecord.version,
       submitted_at: new Date().toISOString(),
       status: 'scored',
-      overall_score: overallScore,
+      overall_score: result.overallScore,
     });
 
     if (attemptError) {
@@ -156,11 +183,11 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     }
 
     // Persist attempt answers
-    const answerRecords = attemptAnswers.map((ans) => ({
+    const answerRecords = engineAnswers.map((ans) => ({
       id: ans.id,
       attempt_id: attemptId,
       question_id: ans.questionId,
-      selected_answer: ans.selected,
+      selected_answer: ans.selectedAnswer,
       is_correct: ans.isCorrect,
       is_critical_failure: ans.isCriticalFailure,
     }));
@@ -178,13 +205,13 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const { error: resultError } = await supabase.from('results').insert({
       id: resultId,
       attempt_id: attemptId,
-      overall_score: overallScore,
-      status,
-      competency_scores: competencyScores,
-      critical_failures: criticalFailures,
-      strengths: competencyScores.filter((c) => c.passed).map((c) => c.competencyName),
-      review_areas: competencyScores.filter((c) => !c.passed).map((c) => c.competencyName),
-      remediation: [],
+      overall_score: result.overallScore,
+      status: result.status,
+      competency_scores: JSON.parse(JSON.stringify(result.competencyScores)),
+      critical_failures: result.criticalFailures,
+      strengths: result.strengths,
+      review_areas: result.reviewAreas,
+      remediation: JSON.parse(JSON.stringify(result.remediationActions)),
     });
 
     if (resultError) {
@@ -194,10 +221,10 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     return Response.json({
       attemptId,
       resultId,
-      overallScore,
-      status,
-      competencyScores,
-      criticalFailures,
+      overallScore: result.overallScore,
+      status: result.status,
+      competencyScores: result.competencyScores,
+      criticalFailures: result.criticalFailures,
     });
   } catch (error) {
     console.error('Assessment error:', error);

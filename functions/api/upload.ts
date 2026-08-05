@@ -7,6 +7,15 @@ import type { Env } from '../lib/env';
 import { createSupabaseClient } from '../lib/supabase';
 import { generateEmbedding } from '../lib/embeddings';
 import { uploadFieldsSchema } from '../lib/validation';
+import { extractUser } from '../lib/auth';
+
+/** Allowed text-based content types for upload */
+const ALLOWED_CONTENT_TYPES = new Set([
+  'text/plain',
+  'text/markdown',
+  'text/csv',
+  'application/json',
+]);
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
@@ -31,6 +40,30 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       return Response.json({ error: 'file is required' }, { status: 400 });
     }
 
+    const supabase = createSupabaseClient(env);
+
+    // Extract user identity from JWT or fall back to body field in demo mode
+    const user = await extractUser(request, supabase, parsed.data.uploadedBy);
+    if (!user) {
+      return Response.json(
+        { error: 'Unauthorized: invalid or expired token' },
+        { status: 401 }
+      );
+    }
+
+    const authenticatedUserId = user.id;
+
+    // Validate file content type - only accept text-based formats
+    const contentType = file.type || 'application/octet-stream';
+    if (!ALLOWED_CONTENT_TYPES.has(contentType)) {
+      return Response.json(
+        {
+          error: `Unsupported file format: ${contentType}. Only text-based files are currently supported (text/plain, text/markdown, text/csv, application/json). PDF and DOCX support is planned for a future release.`,
+        },
+        { status: 400 }
+      );
+    }
+
     if (file.size > 10 * 1024 * 1024) {
       return Response.json(
         { error: 'File size exceeds 10MB limit' },
@@ -38,7 +71,6 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       );
     }
 
-    const supabase = createSupabaseClient(env);
     const sourceId = crypto.randomUUID();
     const storagePath = `modules/${parsed.data.moduleId}/sources/${sourceId}/${file.name}`;
 
@@ -77,7 +109,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       content_type: file.type,
       file_size: file.size,
       status: 'processing',
-      uploaded_by: parsed.data.uploadedBy,
+      uploaded_by: authenticatedUserId,
     });
 
     if (sourceError) {

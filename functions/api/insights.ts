@@ -24,6 +24,32 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
     const supabase = createSupabaseClient(env);
 
+    // Count distinct learners assigned (enrolled) for this module
+    // A learner is considered "assigned" if they have any attempt (regardless of status)
+    // or if they are linked to the module in some enrollment record.
+    // Since we don't have a dedicated enrollment table, we count distinct learners
+    // who have at least one attempt record (any status) as "assigned",
+    // which represents learners who have been given access to the module.
+    const { data: assignedData, error: assignedError } = await supabase
+      .from('attempts')
+      .select('learner_id')
+      .eq('module_id', parsed.data.moduleId);
+
+    if (assignedError) {
+      console.error('Assigned count error:', assignedError.message);
+      return Response.json(
+        { error: 'Database service temporarily unavailable' },
+        { status: 503 }
+      );
+    }
+
+    // Count distinct learners who have started (have at least one attempt)
+    const distinctLearnerIds = new Set(
+      (assignedData || []).map((row) => row.learner_id)
+    );
+    const assigned = distinctLearnerIds.size;
+    const started = distinctLearnerIds.size;
+
     // Count completed (scored) attempts
     const { count: completedCount, error: countError } = await supabase
       .from('attempts')
@@ -70,10 +96,10 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
     return Response.json({
       moduleId: parsed.data.moduleId,
-      assigned: 30,
-      started: 27,
+      assigned,
+      started,
       completed,
-      completionRate: completed > 0 ? completed / 30 : 0,
+      completionRate: assigned > 0 ? completed / assigned : 0,
       readinessDistribution: dist,
     });
   } catch (error) {
