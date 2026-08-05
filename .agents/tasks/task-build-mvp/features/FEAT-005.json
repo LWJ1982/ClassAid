@@ -2,7 +2,7 @@
   "id": "FEAT-005",
   "type": "feat",
   "description": "Add Vitest unit tests for the readiness engine (required boundary tests from testing.md steering file) and for the Groq/Supabase integration layer (mocked). Ensure deterministic scoring logic is thoroughly tested.",
-  "status": "pending",
+  "status": "in_progress",
   "steps": [
     "Create vitest.config.ts at project root with TypeScript path aliases matching tsconfig.json.",
     "Create tests/engine/readiness-engine.test.ts: Implement all required test cases from testing.md steering file: perfect score -> READY, zero score -> FURTHER_PREPARATION, exact threshold (80%) -> READY, one point below (79%) -> REVIEW_REQUIRED, high score with critical failure -> REVIEW_REQUIRED, multiple critical failures -> REVIEW_REQUIRED, mandatory competency below threshold -> not READY, incomplete attempt -> error thrown, unknown/duplicate question IDs -> rejected, deterministic repeat execution.",
