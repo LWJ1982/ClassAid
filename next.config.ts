@@ -1,9 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // @cloudflare/next-on-pages requires these settings
-  experimental: {
-    // Enable edge runtime for API routes on Cloudflare
+  // Static export for Cloudflare Pages deployment from Windows
+  // API routes are handled by Cloudflare Pages Functions in /functions
+  output: "export",
+  images: {
+    unoptimized: true,
   },
 };
 
