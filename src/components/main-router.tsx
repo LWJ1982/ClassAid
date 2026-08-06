@@ -16,15 +16,18 @@ import { ModuleConfig } from "./instructor/module-config";
 import { CheckpointApproval } from "./instructor/checkpoint-approval";
 import { ContentManagement } from "./instructor/content-management";
 import { AdminRegistry } from "./admin/registry";
+import { UserManagement } from "./admin/user-management";
 
 export type LearnerView = "dashboard" | "overview" | "activity" | "coach" | "assessment" | "report";
 export type InstructorView = "insights" | "configure" | "checkpoints" | "content";
+export type AdminView = "registry" | "users";
 
 export function MainRouter() {
   const { role, assessmentSubmitted, readinessResult } = useApp();
   const { isDemo, user, isLoading } = useAuth();
   const [learnerView, setLearnerView] = useState<LearnerView>("dashboard");
   const [instructorView, setInstructorView] = useState<InstructorView>("insights");
+  const [adminView, setAdminView] = useState<AdminView>("registry");
   const [authView, setAuthView] = useState<"login" | "signup">("login");
 
   // If assessment was submitted and there's a result, default to report view
@@ -111,7 +114,37 @@ export function MainRouter() {
   }
 
   if (role === "admin") {
-    return <AdminRegistry />;
+    return (
+      <div className="space-y-4">
+        {/* Admin sub-navigation */}
+        <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg p-1 w-fit">
+          <button
+            onClick={() => setAdminView("registry")}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              adminView === "registry"
+                ? "bg-blue-50 text-blue-700 shadow-sm"
+                : "text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            &#x1F4CB; Module Registry
+          </button>
+          <button
+            onClick={() => setAdminView("users")}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              adminView === "users"
+                ? "bg-blue-50 text-blue-700 shadow-sm"
+                : "text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            &#x1F465; User Management
+          </button>
+        </div>
+
+        {/* Admin content */}
+        {adminView === "registry" && <AdminRegistry />}
+        {adminView === "users" && <UserManagement />}
+      </div>
+    );
   }
 
   // Learner flow

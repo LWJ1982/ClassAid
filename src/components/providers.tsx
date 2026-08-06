@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
 import type { Role, DemoUser, ReadinessResult, AttemptAnswer, Competency, AssessmentQuestion, GuidedActivity, CheckpointQuestion, CheckpointApprovalStatus } from "@/lib/domain/types";
 import { demoUsers, competencies as seedCompetencies, questions as seedQuestions, activities as seedActivities, checkpointQuestions as seedCheckpoints } from "@/lib/data/seed";
-import { saveState, loadState, clearState } from "@/lib/persistence";
+import { saveState, loadState, clearState, saveUsers, loadUsers, clearUsers } from "@/lib/persistence";
 import { useAuth } from "@/components/auth/auth-provider";
 
 // Module configuration state managed by instructor
@@ -20,6 +20,10 @@ interface AppState {
   role: Role;
   setRole: (role: Role) => void;
   setCurrentDemoUser: (userId: string) => void;
+  // User management (admin)
+  users: DemoUser[];
+  addUser: (user: DemoUser) => void;
+  removeUser: (userId: string) => void;
   // Learner state
   activityProgress: number;
   setActivityProgress: (step: number) => void;
@@ -103,6 +107,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return (saved?.moduleConfig as ModuleConfig) ?? getInitialConfig();
   });
 
+  const [users, setUsers] = useState<DemoUser[]>(() => {
+    if (typeof window === "undefined") return [...demoUsers];
+    const saved = loadUsers();
+    return saved ?? [...demoUsers];
+  });
+
   // Mark hydrated after first render (canonical hydration pattern)
   useEffect(() => { setHydrated(true); }, []);
 
@@ -121,11 +131,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   }, [hydrated, role, selectedDemoUserId, activityProgress, assessmentAnswers, assessmentSubmitted, readinessResult, attemptAnswers, moduleConfig]);
 
+  // Persist users list
+  useEffect(() => {
+    if (!hydrated) return;
+    saveUsers(users);
+  }, [hydrated, users]);
+
   // When authenticated (not demo), derive role from auth context
   const effectiveRole: Role = isDemo ? role : authRole;
 
   const currentUser = isDemo
-    ? (demoUsers.find((u) => u.id === selectedDemoUserId) ?? demoUsers[0])
+    ? (users.find((u) => u.id === selectedDemoUserId) ?? users[0])
     : {
         id: user?.id ?? "anonymous",
         name: user?.user_metadata?.name ?? user?.email ?? "User",
@@ -138,21 +154,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (isDemo) {
       setRoleState(newRole);
       // When switching role via shortcut, select the first user of that role
-      const firstUserOfRole = demoUsers.find((u) => u.role === newRole);
+      const firstUserOfRole = users.find((u) => u.role === newRole);
       if (firstUserOfRole) {
         setSelectedDemoUserId(firstUserOfRole.id);
       }
     }
-  }, [isDemo]);
+  }, [isDemo, users]);
 
   const setCurrentDemoUser = useCallback((userId: string) => {
     if (!isDemo) return;
-    const targetUser = demoUsers.find((u) => u.id === userId);
+    const targetUser = users.find((u) => u.id === userId);
     if (targetUser) {
       setSelectedDemoUserId(userId);
       setRoleState(targetUser.role);
     }
-  }, [isDemo]);
+  }, [isDemo, users]);
 
   const setAssessmentAnswer = useCallback((questionId: string, answer: string) => {
     setAssessmentAnswersState((prev) => ({ ...prev, [questionId]: answer }));
@@ -200,6 +216,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setModuleConfig(getInitialConfig());
   }, []);
 
+  const addUser = useCallback((newUser: DemoUser) => {
+    setUsers((prev) => [...prev, newUser]);
+  }, []);
+
+  const removeUser = useCallback((userId: string) => {
+    setUsers((prev) => prev.filter((u) => u.id !== userId));
+  }, []);
+
   const updateCheckpoint = useCallback((checkpointId: string, updates: Partial<CheckpointQuestion>) => {
     setModuleConfig((prev) => ({
       ...prev,
@@ -233,6 +257,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const resetDemo = useCallback(() => {
     clearState();
+    clearUsers();
     setSelectedDemoUserId("user-learner-1");
     setRoleState("learner");
     setActivityProgress(0);
@@ -241,6 +266,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setAttemptAnswers([]);
     setAssessmentSubmitted(false);
     setModuleConfig(getInitialConfig());
+    setUsers([...demoUsers]);
   }, []);
 
   return (
@@ -250,6 +276,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         role: effectiveRole,
         setRole,
         setCurrentDemoUser,
+        users,
+        addUser,
+        removeUser,
         activityProgress,
         setActivityProgress,
         assessmentAnswers,

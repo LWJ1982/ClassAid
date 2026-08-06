@@ -4,11 +4,10 @@ import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import { useApp } from "./providers";
 import { useAuth } from "./auth/auth-provider";
-import { demoUsers } from "@/lib/data/seed";
 import type { Role } from "@/lib/domain/types";
 
 export function Navigation() {
-  const { role, setRole, currentUser, setCurrentDemoUser, resetDemo, hydrated } = useApp();
+  const { role, setRole, currentUser, setCurrentDemoUser, resetDemo, hydrated, users } = useApp();
   const { isDemo, signOut, user } = useAuth();
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showUserPicker, setShowUserPicker] = useState(false);
@@ -34,9 +33,9 @@ export function Navigation() {
   const roleIcon = (r: Role) => roles.find((x) => x.value === r)?.icon ?? "";
 
   // Group demo users by role
-  const learners = demoUsers.filter((u) => u.role === "learner");
-  const instructors = demoUsers.filter((u) => u.role === "instructor");
-  const admins = demoUsers.filter((u) => u.role === "admin");
+  const learners = users.filter((u) => u.role === "learner");
+  const instructors = users.filter((u) => u.role === "instructor");
+  const admins = users.filter((u) => u.role === "admin");
 
   if (!hydrated) {
     return (
