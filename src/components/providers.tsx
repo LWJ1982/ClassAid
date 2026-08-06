@@ -3,7 +3,9 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
 import type { Role, DemoUser, ReadinessResult, AttemptAnswer, Competency, AssessmentQuestion, GuidedActivity, CheckpointQuestion, CheckpointApprovalStatus } from "@/lib/domain/types";
 import { demoUsers, competencies as seedCompetencies, questions as seedQuestions, activities as seedActivities, checkpointQuestions as seedCheckpoints } from "@/lib/data/seed";
-import { saveState, loadState, clearState } from "@/lib/persistence";
+import { getModuleDataById } from "@/lib/data/module-data";
+import { saveState, loadState, clearState, saveUsers, loadUsers, clearUsers } from "@/lib/persistence";
+import { useAuth } from "@/components/auth/auth-provider";
 
 // Module configuration state managed by instructor
 export interface ModuleConfig {
@@ -18,6 +20,14 @@ interface AppState {
   currentUser: DemoUser;
   role: Role;
   setRole: (role: Role) => void;
+  setCurrentDemoUser: (userId: string) => void;
+  // User management (admin)
+  users: DemoUser[];
+  addUser: (user: DemoUser) => boolean;
+  removeUser: (userId: string) => boolean;
+  // Module selection (learner)
+  selectedModuleId: string | null;
+  setSelectedModuleId: (moduleId: string | null) => void;
   // Learner state
   activityProgress: number;
   setActivityProgress: (step: number) => void;
@@ -40,6 +50,11 @@ interface AppState {
   approveCheckpoint: (checkpointId: string) => void;
   rejectCheckpoint: (checkpointId: string) => void;
   resetConfig: () => void;
+  // Preview mode (instructor simulating learner journey)
+  isPreviewMode: boolean;
+  previewModuleId: string | null;
+  enterPreviewMode: (moduleId: string) => void;
+  exitPreviewMode: () => void;
   // Demo controls
   resetDemo: () => void;
   hydrated: boolean;
@@ -47,7 +62,19 @@ interface AppState {
 
 const AppContext = createContext<AppState | null>(null);
 
-function getInitialConfig(): ModuleConfig {
+function getInitialConfig(moduleId?: string): ModuleConfig {
+  if (moduleId) {
+    const data = getModuleDataById(moduleId);
+    if (data) {
+      return {
+        overallThreshold: 0.8,
+        competencies: JSON.parse(JSON.stringify(data.competencies)),
+        questions: JSON.parse(JSON.stringify(data.questions)),
+        activities: JSON.parse(JSON.stringify(data.activities)),
+        checkpoints: JSON.parse(JSON.stringify(data.checkpoints)),
+      };
+    }
+  }
   return {
     overallThreshold: 0.8,
     competencies: JSON.parse(JSON.stringify(seedCompetencies)),
@@ -58,7 +85,13 @@ function getInitialConfig(): ModuleConfig {
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
+  const { isDemo, role: authRole, user } = useAuth();
   const [hydrated, setHydrated] = useState(false);
+  const [selectedDemoUserId, setSelectedDemoUserId] = useState<string>(() => {
+    if (typeof window === "undefined") return "user-learner-1";
+    const saved = loadState();
+    return saved?.selectedDemoUserId ?? "user-learner-1";
+  });
   const [role, setRoleState] = useState<Role>(() => {
     if (typeof window === "undefined") return "learner";
     const saved = loadState();
@@ -95,8 +128,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return (saved?.moduleConfig as ModuleConfig) ?? getInitialConfig();
   });
 
-  // Mark hydrated after first render — suppress lint: this is the canonical hydration pattern
-  // eslint-disable-next-line react-hooks/set-state-in-effect
+  const [users, setUsers] = useState<DemoUser[]>(() => {
+    if (typeof window === "undefined") return [...demoUsers];
+    const saved = loadUsers();
+    return saved ?? [...demoUsers];
+  });
+
+  // Selected module for learner flow (not persisted - resets when switching users)
+  const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
+
+  // Preview mode state (not persisted - resets on refresh)
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [previewModuleId, setPreviewModuleId] = useState<string | null>(null);
+
+  // When selectedModuleId changes, update moduleConfig to match (for learner flow)
+  useEffect(() => {
+    if (selectedModuleId) {
+      setModuleConfig(getInitialConfig(selectedModuleId));
+    }
+  }, [selectedModuleId]);
+
+  // Mark hydrated after first render (canonical hydration pattern)
   useEffect(() => { setHydrated(true); }, []);
 
   // Persist state changes
@@ -104,6 +156,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (!hydrated) return;
     saveState({
       role,
+      selectedDemoUserId,
       activityProgress,
       assessmentAnswers,
       assessmentSubmitted,
@@ -111,13 +164,46 @@ export function AppProvider({ children }: { children: ReactNode }) {
       attemptAnswers,
       moduleConfig,
     });
-  }, [hydrated, role, activityProgress, assessmentAnswers, assessmentSubmitted, readinessResult, attemptAnswers, moduleConfig]);
+  }, [hydrated, role, selectedDemoUserId, activityProgress, assessmentAnswers, assessmentSubmitted, readinessResult, attemptAnswers, moduleConfig]);
 
-  const currentUser = demoUsers.find((u) => u.role === role) ?? demoUsers[0];
+  // Persist users list
+  useEffect(() => {
+    if (!hydrated) return;
+    saveUsers(users);
+  }, [hydrated, users]);
+
+  // When authenticated (not demo), derive role from auth context
+  const effectiveRole: Role = isDemo ? role : authRole;
+
+  const currentUser = isDemo
+    ? (users.find((u) => u.id === selectedDemoUserId) ?? users[0])
+    : {
+        id: user?.id ?? "anonymous",
+        name: user?.user_metadata?.name ?? user?.email ?? "User",
+        email: user?.email ?? "",
+        role: authRole,
+      };
 
   const setRole = useCallback((newRole: Role) => {
-    setRoleState(newRole);
-  }, []);
+    // Only allow role switching in demo mode
+    if (isDemo) {
+      setRoleState(newRole);
+      // When switching role via shortcut, select the first user of that role
+      const firstUserOfRole = users.find((u) => u.role === newRole);
+      if (firstUserOfRole) {
+        setSelectedDemoUserId(firstUserOfRole.id);
+      }
+    }
+  }, [isDemo, users]);
+
+  const setCurrentDemoUser = useCallback((userId: string) => {
+    if (!isDemo) return;
+    const targetUser = users.find((u) => u.id === userId);
+    if (targetUser) {
+      setSelectedDemoUserId(userId);
+      setRoleState(targetUser.role);
+    }
+  }, [isDemo, users]);
 
   const setAssessmentAnswer = useCallback((questionId: string, answer: string) => {
     setAssessmentAnswersState((prev) => ({ ...prev, [questionId]: answer }));
@@ -165,6 +251,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setModuleConfig(getInitialConfig());
   }, []);
 
+  const addUser = useCallback((newUser: DemoUser): boolean => {
+    // Check email uniqueness
+    const emailExists = users.some((u) => u.email.toLowerCase() === newUser.email.toLowerCase());
+    if (emailExists) return false;
+    setUsers((prev) => [...prev, newUser]);
+    return true;
+  }, [users]);
+
+  const removeUser = useCallback((userId: string): boolean => {
+    // Guard: do not allow removing the currently selected demo user
+    if (userId === selectedDemoUserId) return false;
+    setUsers((prev) => prev.filter((u) => u.id !== userId));
+    return true;
+  }, [selectedDemoUserId]);
+
   const updateCheckpoint = useCallback((checkpointId: string, updates: Partial<CheckpointQuestion>) => {
     setModuleConfig((prev) => ({
       ...prev,
@@ -196,8 +297,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const enterPreviewMode = useCallback((moduleId: string) => {
+    setIsPreviewMode(true);
+    setPreviewModuleId(moduleId);
+  }, []);
+
+  const exitPreviewMode = useCallback(() => {
+    setIsPreviewMode(false);
+    setPreviewModuleId(null);
+  }, []);
+
   const resetDemo = useCallback(() => {
     clearState();
+    clearUsers();
+    setSelectedDemoUserId("user-learner-1");
     setRoleState("learner");
     setActivityProgress(0);
     setAssessmentAnswersState({});
@@ -205,14 +318,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setAttemptAnswers([]);
     setAssessmentSubmitted(false);
     setModuleConfig(getInitialConfig());
+    setUsers([...demoUsers]);
+    setIsPreviewMode(false);
+    setPreviewModuleId(null);
+    setSelectedModuleId(null);
   }, []);
 
   return (
     <AppContext.Provider
       value={{
         currentUser,
-        role,
+        role: effectiveRole,
         setRole,
+        setCurrentDemoUser,
+        users,
+        addUser,
+        removeUser,
+        selectedModuleId,
+        setSelectedModuleId,
         activityProgress,
         setActivityProgress,
         assessmentAnswers,
@@ -233,6 +356,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         approveCheckpoint,
         rejectCheckpoint,
         resetConfig,
+        isPreviewMode,
+        previewModuleId,
+        enterPreviewMode,
+        exitPreviewMode,
         resetDemo,
         hydrated,
       }}

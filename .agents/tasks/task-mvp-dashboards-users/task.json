@@ -1,0 +1,14 @@
+{
+  "task_id": "task-mvp-dashboards-users",
+  "task_description": "Expand the Class AId MVP with personalized dashboards for each role, a second Computer Science domain with users, admin user management (add/remove learners and instructors), and instructor learner-preview mode to simulate the learner journey.",
+  "status": "completed",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003"],
+  "blocked_reason": null,
+  "verification": {
+    "build": "pass",
+    "tests": "pass",
+    "test_quality": "pass",
+    "docker_build": "skipped",
+    "summary": "TypeScript typecheck clean, all 56 tests pass, static build to out/ succeeds. Review fixes applied: learner flow is now module-aware, preview state uses lifted React state instead of mutable singleton, removeUser guards against removing active user, addUser validates email uniqueness."
+  }
+}

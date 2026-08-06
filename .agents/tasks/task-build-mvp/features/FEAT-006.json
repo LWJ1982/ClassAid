@@ -1,0 +1,29 @@
+{
+  "id": "FEAT-006",
+  "type": "docs",
+  "description": "Create deployment documentation and AWS CDK migration scaffold. Document the end-to-end deployment process for Cloudflare Pages + Supabase + Groq. Provide the AWS CDK TypeScript scaffold for future migration.",
+  "status": "completed",
+  "steps": [
+    "Create docs/DEPLOYMENT.md: Step-by-step deployment guide covering: 1) Supabase project setup (create project, run migrations, enable RLS, configure Auth email templates), 2) Groq API key generation, 3) Cloudflare Pages project setup (connect GitHub repo, set environment variables, configure build command), 4) Environment variables reference table, 5) Post-deployment verification checklist.",
+    "Create docs/AWS_MIGRATION.md: Document the future AWS migration path per handoff document Section 13. Include: architecture diagram (text), service mapping table (Supabase -> Aurora, Groq -> Bedrock, Cloudflare -> CloudFront+Lambda, etc.), migration steps overview.",
+    "Create infrastructure/aws-cdk/README.md: Instructions for the CDK scaffold.",
+    "Create infrastructure/aws-cdk/bin/classaid.ts: CDK app entry point.",
+    "Create infrastructure/aws-cdk/lib/classaid-stack.ts: CDK stack scaffold with placeholder constructs for Aurora Serverless v2, Bedrock, CloudFront, Lambda, Cognito, S3. Include comments explaining each construct's role and what it replaces from the current stack.",
+    "Create infrastructure/aws-cdk/package.json and infrastructure/aws-cdk/tsconfig.json: Minimal CDK project config.",
+    "Update wrangler.toml: Remove D1, R2, and Vectorize bindings. Add vars for SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (as placeholders). Keep AI binding for embeddings."
+  ],
+  "acceptance_criteria": [
+    "docs/DEPLOYMENT.md provides a complete deployment guide",
+    "docs/AWS_MIGRATION.md documents the migration path with service mapping",
+    "infrastructure/aws-cdk/ contains a valid CDK scaffold that outlines the target architecture",
+    "wrangler.toml is updated to reflect Supabase-based architecture (no D1/R2/Vectorize)",
+    "pnpm run typecheck passes",
+    "pnpm run build passes"
+  ],
+  "verification": [
+    "pnpm run typecheck",
+    "pnpm run build"
+  ],
+  "blocked_reason": null,
+  "findings": "All documentation and CDK scaffold created successfully. Had to add 'infrastructure' to tsconfig.json exclude array to prevent root TypeScript compilation from trying to resolve aws-cdk-lib imports in the CDK scaffold. Both typecheck and build pass cleanly."
+}

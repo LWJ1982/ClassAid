@@ -1,6 +1,7 @@
 "use client";
 
-import { learningModule as module, domain, moduleVersion, objectives, competencies } from "@/lib/data/seed";
+import { useApp } from "../providers";
+import { getModuleDataById } from "@/lib/data/module-data";
 
 interface Props {
   onStartActivity: () => void;
@@ -8,6 +9,22 @@ interface Props {
 }
 
 export function ModuleOverview({ onStartActivity, onBack }: Props) {
+  const { selectedModuleId } = useApp();
+  const data = getModuleDataById(selectedModuleId ?? "module-1");
+
+  if (!data) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-slate-500">Module not found.</p>
+        <button onClick={onBack} className="mt-4 text-blue-600 hover:text-blue-700 text-sm">
+          Back to Dashboard
+        </button>
+      </div>
+    );
+  }
+
+  const { module: mod, domain: modDomain, version: modVersion, objectives, competencies } = data;
+
   return (
     <div className="space-y-6">
       {/* Back button */}
@@ -22,28 +39,28 @@ export function ModuleOverview({ onStartActivity, onBack }: Props) {
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
         <div className="flex items-center gap-2 mb-3">
           <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700">
-            {domain.name}
+            {modDomain.name}
           </span>
-          <span className="text-xs text-slate-400">v{moduleVersion.version}</span>
+          <span className="text-xs text-slate-400">v{modVersion.version}</span>
         </div>
-        <h1 className="text-2xl font-bold text-slate-900">{module.title}</h1>
-        <p className="mt-2 text-slate-600">{module.description}</p>
+        <h1 className="text-2xl font-bold text-slate-900">{mod.title}</h1>
+        <p className="mt-2 text-slate-600">{mod.description}</p>
 
         <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div className="text-center p-3 bg-slate-50 rounded-lg">
-            <div className="text-lg font-bold text-slate-900">{module.estimatedMinutes}</div>
+            <div className="text-lg font-bold text-slate-900">{mod.estimatedMinutes}</div>
             <div className="text-xs text-slate-500">Minutes</div>
           </div>
           <div className="text-center p-3 bg-slate-50 rounded-lg">
-            <div className="text-lg font-bold text-slate-900">7</div>
+            <div className="text-lg font-bold text-slate-900">{data.activities.length}</div>
             <div className="text-xs text-slate-500">Activities</div>
           </div>
           <div className="text-center p-3 bg-slate-50 rounded-lg">
-            <div className="text-lg font-bold text-slate-900">5</div>
+            <div className="text-lg font-bold text-slate-900">{data.questions.length}</div>
             <div className="text-xs text-slate-500">Questions</div>
           </div>
           <div className="text-center p-3 bg-slate-50 rounded-lg">
-            <div className="text-lg font-bold text-slate-900">4</div>
+            <div className="text-lg font-bold text-slate-900">{competencies.length}</div>
             <div className="text-xs text-slate-500">Competencies</div>
           </div>
         </div>
@@ -92,12 +109,12 @@ export function ModuleOverview({ onStartActivity, onBack }: Props) {
       {/* Compliance notice */}
       <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
         <div className="flex gap-3">
-          <span className="text-amber-500 text-lg">\u26A0\uFE0F</span>
+          <span className="text-amber-500 text-lg">{"\u26A0\uFE0F"}</span>
           <div>
-            <p className="text-sm font-medium text-amber-900">{domain.complianceLabel}</p>
+            <p className="text-sm font-medium text-amber-900">{modDomain.complianceLabel}</p>
             <p className="text-sm text-amber-700 mt-1">
-              This module includes critical safety requirements. Failure to demonstrate understanding
-              of critical safety concepts will prevent a &quot;Ready&quot; outcome regardless of overall score.
+              This module includes critical requirements. Failure to demonstrate understanding
+              of critical concepts will prevent a &quot;Ready&quot; outcome regardless of overall score.
             </p>
           </div>
         </div>

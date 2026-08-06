@@ -253,10 +253,18 @@ export interface StepFriction {
   averageTimeSpent: number;
 }
 
+// Preview mode (instructor simulating learner journey)
+export interface PreviewMode {
+  active: boolean;
+  moduleId: string;
+  instructorId: string;
+}
+
 // Demo user
 export interface DemoUser {
   id: string;
   name: string;
   role: Role;
   email: string;
+  domainId?: string;
 }

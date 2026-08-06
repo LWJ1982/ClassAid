@@ -1,7 +1,6 @@
 /**
  * Seeded Demo Data
- * Module: Digital Multimeter Fundamentals and Safety
- * Cross-domain configurable — this module demonstrates electrical/electronics domain
+ * Cross-domain configurable — demonstrates multiple domain modules
  */
 
 import type {
@@ -22,20 +21,33 @@ import type {
   StepFriction,
 } from '../domain/types';
 
-// Demo Users
+// Demo Users (7 accounts: 4 learners, 2 instructors, 1 admin)
 export const demoUsers: DemoUser[] = [
-  { id: 'user-learner-1', name: 'Alex Tan', role: 'learner', email: 'alex.tan@university.edu' },
-  { id: 'user-instructor-1', name: 'Dr Sarah Lim', role: 'instructor', email: 's.lim@university.edu' },
+  { id: 'user-learner-1', name: 'Alex Tan', role: 'learner', email: 'alex.tan@university.edu', domainId: 'domain-1' },
+  { id: 'user-learner-2', name: 'Rachel Ng', role: 'learner', email: 'rachel.ng@university.edu', domainId: 'domain-1' },
+  { id: 'user-learner-3', name: 'Jordan Lee', role: 'learner', email: 'jordan.lee@university.edu', domainId: 'domain-2' },
+  { id: 'user-learner-4', name: 'Mei Chen', role: 'learner', email: 'mei.chen@university.edu', domainId: 'domain-2' },
+  { id: 'user-instructor-1', name: 'Dr Sarah Lim', role: 'instructor', email: 's.lim@university.edu', domainId: 'domain-1' },
+  { id: 'user-instructor-2', name: 'Prof David Tan', role: 'instructor', email: 'd.tan@university.edu', domainId: 'domain-2' },
   { id: 'user-admin-1', name: 'Daniel Wong', role: 'admin', email: 'd.wong@university.edu' },
 ];
 
-// Domain
+// Domains
 export const domain: Domain = {
   id: 'domain-1',
   name: 'Electrical & Electronics Engineering',
   description: 'Measurement, circuits, instrumentation, and electrical safety',
   complianceLabel: 'Laboratory Safety Compliance',
 };
+
+export const domainCS: Domain = {
+  id: 'domain-2',
+  name: 'Computer Science',
+  description: 'Programming fundamentals, algorithms, data structures, and software development practices',
+  complianceLabel: 'Academic Integrity',
+};
+
+export const domains: Domain[] = [domain, domainCS];
 
 // Module
 export const learningModule: LearningModule = {
@@ -443,6 +455,19 @@ export const moduleRegistry: ModuleRegistryEntry[] = [
   },
   {
     moduleId: 'module-2',
+    title: 'Introduction to Sorting Algorithms',
+    domain: 'Computer Science',
+    owner: 'Prof David Tan',
+    activeVersion: '1.0.0',
+    sourceVersion: 'SortAlg-Textbook-v2.0',
+    status: 'published',
+    publishedAt: '2026-08-01T09:00:00Z',
+    lastReviewedAt: '2026-07-30T16:00:00Z',
+    totalAttempts: 20,
+    completionRate: 0.80,
+  },
+  {
+    moduleId: 'module-3',
     title: 'Oscilloscope Operation and Signal Analysis',
     domain: 'Electrical & Electronics Engineering',
     owner: 'Dr Sarah Lim',
@@ -862,6 +887,559 @@ export const stepFrictionData: StepFriction[] = [
     totalAttempts: 27,
     firstAttemptPassRate: 0.85,
     averageRetries: 1.1,
+    averageTimeSpent: 30,
+  },
+];
+
+// ============================================================
+// COMPUTER SCIENCE DOMAIN — Sorting Algorithms Module
+// ============================================================
+
+// CS Module
+export const csModule: LearningModule = {
+  id: 'module-2',
+  domainId: 'domain-2',
+  title: 'Introduction to Sorting Algorithms',
+  description:
+    'Understand fundamental sorting algorithms, their time complexities, trade-offs, and appropriate use cases before implementing them in practical exercises.',
+  ownerId: 'user-instructor-2',
+  status: 'published',
+  activeVersionId: 'version-2',
+  estimatedMinutes: 20,
+};
+
+// CS Module Version
+export const csModuleVersion: ModuleVersion = {
+  id: 'version-2',
+  moduleId: 'module-2',
+  version: '1.0.0',
+  approvalStatus: 'published',
+  publishedAt: '2026-08-01T09:00:00Z',
+  lastReviewedAt: '2026-07-30T16:00:00Z',
+  sourceVersion: 'SortAlg-Textbook-v2.0',
+};
+
+// CS Learning Objectives
+export const csObjectives: LearningObjective[] = [
+  {
+    id: 'cs-obj-1',
+    moduleVersionId: 'version-2',
+    title: 'Algorithm Complexity',
+    description: 'Explain time and space complexity for common sorting algorithms using Big-O notation.',
+    sequence: 1,
+  },
+  {
+    id: 'cs-obj-2',
+    moduleVersionId: 'version-2',
+    title: 'Comparison-Based Sorting',
+    description: 'Describe how bubble sort, selection sort, and insertion sort work and identify their performance characteristics.',
+    sequence: 2,
+  },
+  {
+    id: 'cs-obj-3',
+    moduleVersionId: 'version-2',
+    title: 'Divide-and-Conquer Sorting',
+    description: 'Explain merge sort and quick sort strategies, including pivot selection and merge operations.',
+    sequence: 3,
+  },
+  {
+    id: 'cs-obj-4',
+    moduleVersionId: 'version-2',
+    title: 'Algorithm Selection',
+    description: 'Choose an appropriate sorting algorithm based on data size, structure, and constraints.',
+    sequence: 4,
+  },
+];
+
+// CS Competencies
+export const csCompetencies: Competency[] = [
+  {
+    id: 'cs-comp-1',
+    moduleVersionId: 'version-2',
+    name: 'Algorithm Analysis',
+    description: 'Understanding time and space complexity of sorting algorithms',
+    weight: 0.30,
+    minimumThreshold: 0.7,
+    mandatory: true,
+    critical: false,
+  },
+  {
+    id: 'cs-comp-2',
+    moduleVersionId: 'version-2',
+    name: 'Implementation Patterns',
+    description: 'Correct implementation logic for sorting algorithms (swap, partition, merge)',
+    weight: 0.30,
+    minimumThreshold: 0.7,
+    mandatory: true,
+    critical: false,
+  },
+  {
+    id: 'cs-comp-3',
+    moduleVersionId: 'version-2',
+    name: 'Edge Cases',
+    description: 'Handling edge cases including empty arrays, duplicates, and already-sorted input',
+    weight: 0.20,
+    minimumThreshold: 0.6,
+    mandatory: true,
+    critical: true,
+  },
+  {
+    id: 'cs-comp-4',
+    moduleVersionId: 'version-2',
+    name: 'Optimization',
+    description: 'Choosing appropriate algorithms based on constraints and recognizing optimization opportunities',
+    weight: 0.20,
+    minimumThreshold: 0.5,
+    mandatory: false,
+    critical: false,
+  },
+];
+
+// CS Guided Activities (6 steps)
+export const csActivities: GuidedActivity[] = [
+  {
+    id: 'cs-act-1',
+    moduleVersionId: 'version-2',
+    title: 'Why Sorting Matters',
+    activityType: 'instruction',
+    sequence: 1,
+    content:
+      'Sorting is a fundamental operation in computer science. Efficient sorting enables binary search (O(log n) vs O(n) linear search), database indexing, data deduplication, and many divide-and-conquer strategies. Understanding sorting algorithm trade-offs is essential for making informed implementation decisions.',
+    explanation:
+      'Sorting underpins many higher-level algorithms and data structures. Choosing the wrong algorithm can make the difference between a program running in seconds vs hours.',
+    warning: null,
+    linkedCompetencyId: 'cs-comp-4',
+  },
+  {
+    id: 'cs-act-2',
+    moduleVersionId: 'version-2',
+    title: 'Bubble Sort and Selection Sort',
+    activityType: 'demonstration',
+    sequence: 2,
+    content:
+      'Bubble Sort repeatedly steps through the list, compares adjacent elements, and swaps them if they are in the wrong order. After each pass, the largest unsorted element "bubbles" to its correct position. Time complexity: O(n^2) average and worst case, O(n) best case (already sorted with optimization flag).\n\nSelection Sort finds the minimum element from the unsorted portion and places it at the beginning. It always performs O(n^2) comparisons regardless of input order.',
+    explanation:
+      'These are simple comparison-based algorithms. They are easy to understand and implement but inefficient for large datasets. Bubble sort can be optimized with an early-termination flag if no swaps occur in a pass.',
+    warning: null,
+    linkedCompetencyId: 'cs-comp-2',
+  },
+  {
+    id: 'cs-act-3',
+    moduleVersionId: 'version-2',
+    title: 'Merge Sort — Divide and Conquer',
+    activityType: 'demonstration',
+    sequence: 3,
+    content:
+      'Merge Sort divides the array into halves recursively until each sub-array has one element, then merges them back in sorted order. The merge operation compares elements from both halves and builds the sorted result.\n\nTime complexity: O(n log n) in ALL cases (best, average, worst). Space complexity: O(n) additional space for the merge buffer. Merge sort is stable (preserves relative order of equal elements).',
+    explanation:
+      'Merge sort guarantees O(n log n) performance regardless of input, making it predictable. The trade-off is extra memory usage. It is the preferred algorithm when stability matters or worst-case performance must be guaranteed.',
+    warning: null,
+    linkedCompetencyId: 'cs-comp-1',
+  },
+  {
+    id: 'cs-act-4',
+    moduleVersionId: 'version-2',
+    title: 'Quick Sort — Pivot and Partition',
+    activityType: 'demonstration',
+    sequence: 4,
+    content:
+      'Quick Sort selects a pivot element and partitions the array into elements less than the pivot and elements greater than the pivot, then recursively sorts both partitions.\n\nTime complexity: O(n log n) average case, O(n^2) worst case (when pivot is consistently the smallest or largest element). Space complexity: O(log n) for the recursion stack.\n\nPivot selection strategies include: first element, last element, random element, and median-of-three.',
+    explanation:
+      'Quick sort is typically faster than merge sort in practice due to better cache performance and lower constant factors, despite the O(n^2) worst case. Good pivot selection (random or median-of-three) makes worst case extremely unlikely.',
+    warning: 'A poorly chosen pivot (e.g., always first element on sorted data) degrades quick sort to O(n^2). Always use randomized or median-of-three pivot selection in production code.',
+    linkedCompetencyId: 'cs-comp-1',
+  },
+  {
+    id: 'cs-act-5',
+    moduleVersionId: 'version-2',
+    title: 'Edge Cases and Correctness',
+    activityType: 'practice',
+    sequence: 5,
+    content:
+      'Critical edge cases for sorting algorithms:\n- Empty array: should return empty array without error\n- Single element: already sorted, return as-is\n- All elements identical: algorithm must handle without infinite loops\n- Already sorted input: some algorithms (bubble sort) can optimize, others (selection sort) cannot\n- Reverse-sorted input: worst case for naive quick sort with first-element pivot\n- Very large arrays: memory constraints favor in-place algorithms',
+    explanation:
+      'Failing to handle edge cases leads to bugs, infinite loops, or crashes in production. Every sorting implementation must be tested against these cases.',
+    warning: 'Algorithms that fail on empty input or duplicate elements are incorrect. Always test with boundary conditions.',
+    linkedCompetencyId: 'cs-comp-3',
+  },
+  {
+    id: 'cs-act-6',
+    moduleVersionId: 'version-2',
+    title: 'Choosing the Right Algorithm',
+    activityType: 'reflection',
+    sequence: 6,
+    content:
+      'Algorithm selection depends on constraints:\n- Small arrays (n < 20): Insertion sort (low overhead despite O(n^2))\n- General purpose: Quick sort (fastest average case, in-place)\n- Guaranteed O(n log n): Merge sort (stable, predictable)\n- Nearly sorted data: Insertion sort (O(n) best case) or Timsort\n- Memory constrained: Quick sort or heap sort (in-place)\n- Stability required: Merge sort or Timsort\n\nBefore implementing, ask: What is my data size? Is it nearly sorted? Do I need stability? What memory is available?',
+    explanation:
+      'There is no universally best sorting algorithm. The right choice depends on your specific constraints and data characteristics.',
+    warning: null,
+    linkedCompetencyId: 'cs-comp-4',
+  },
+];
+
+// CS Assessment Questions (5 questions, 2 critical)
+export const csQuestions: AssessmentQuestion[] = [
+  {
+    id: 'cs-q-1',
+    moduleVersionId: 'version-2',
+    competencyId: 'cs-comp-1',
+    questionText: 'What is the worst-case time complexity of merge sort?',
+    questionType: 'multiple-choice',
+    options: [
+      'O(n)',
+      'O(n log n)',
+      'O(n^2)',
+      'O(log n)',
+    ],
+    correctAnswer: 'O(n log n)',
+    explanation:
+      'Merge sort always divides the array in half (log n levels) and performs O(n) work at each level for the merge operation, giving O(n log n) in all cases including worst case.',
+    critical: false,
+    sourceReference: 'SortAlg-Textbook-v2.0, Chapter 3 — Merge Sort Analysis',
+  },
+  {
+    id: 'cs-q-2',
+    moduleVersionId: 'version-2',
+    competencyId: 'cs-comp-2',
+    questionText: 'In quick sort, what happens during the partition step?',
+    questionType: 'multiple-choice',
+    options: [
+      'The array is divided into two equal halves',
+      'Elements are rearranged so that all elements less than the pivot come before it, and all greater come after it',
+      'The smallest element is moved to the front',
+      'Adjacent elements are compared and swapped',
+    ],
+    correctAnswer: 'Elements are rearranged so that all elements less than the pivot come before it, and all greater come after it',
+    explanation:
+      'The partition step places the pivot in its final sorted position, with smaller elements to its left and larger elements to its right. The sub-arrays are then recursively sorted.',
+    critical: false,
+    sourceReference: 'SortAlg-Textbook-v2.0, Chapter 4 — Quick Sort Partition',
+  },
+  {
+    id: 'cs-q-3',
+    moduleVersionId: 'version-2',
+    competencyId: 'cs-comp-3',
+    questionText: 'What should a correct sorting algorithm do when given an empty array as input?',
+    questionType: 'multiple-choice',
+    options: [
+      'Throw an error because there is nothing to sort',
+      'Return null',
+      'Return an empty array without error',
+      'Return an array with a single zero element',
+    ],
+    correctAnswer: 'Return an empty array without error',
+    explanation:
+      'An empty array is a valid edge case. A correct implementation must handle it gracefully by returning an empty array, not by throwing an error or returning unexpected values.',
+    critical: true,
+    sourceReference: 'SortAlg-Textbook-v2.0, Chapter 6 — Edge Cases and Correctness',
+  },
+  {
+    id: 'cs-q-4',
+    moduleVersionId: 'version-2',
+    competencyId: 'cs-comp-3',
+    questionText: 'What can happen if a sorting algorithm does not correctly handle arrays where all elements are identical?',
+    questionType: 'multiple-choice',
+    options: [
+      'It will produce a sorted result but take slightly longer',
+      'It may enter an infinite loop or produce incorrect results',
+      'It will automatically skip the sorting step',
+      'The time complexity improves to O(1)',
+    ],
+    correctAnswer: 'It may enter an infinite loop or produce incorrect results',
+    explanation:
+      'If the partition logic or swap conditions do not account for equal elements, the algorithm may never terminate (infinite loop) or corrupt the data order. This is a critical correctness requirement.',
+    critical: true,
+    sourceReference: 'SortAlg-Textbook-v2.0, Chapter 6 — Duplicate Element Handling',
+  },
+  {
+    id: 'cs-q-5',
+    moduleVersionId: 'version-2',
+    competencyId: 'cs-comp-4',
+    questionText: 'For a nearly-sorted array of 1000 elements, which algorithm would typically perform best?',
+    questionType: 'multiple-choice',
+    options: [
+      'Selection sort, because it always does the same number of comparisons',
+      'Insertion sort, because its best case on nearly-sorted data is O(n)',
+      'Merge sort, because it always runs in O(n log n)',
+      'Bubble sort with no optimizations',
+    ],
+    correctAnswer: 'Insertion sort, because its best case on nearly-sorted data is O(n)',
+    explanation:
+      'Insertion sort performs very well on nearly-sorted data because elements only need to move a short distance. Its best case is O(n) when the data is already sorted or nearly sorted, making it faster than O(n log n) algorithms for this specific case.',
+    critical: false,
+    sourceReference: 'SortAlg-Textbook-v2.0, Chapter 7 — Algorithm Selection',
+  },
+];
+
+// CS Cohort Metrics (for Prof David Tan's instructor view)
+export const csCohortMetrics: CohortMetrics = {
+  moduleId: 'module-2',
+  moduleTitle: 'Introduction to Sorting Algorithms',
+  assigned: 25,
+  started: 23,
+  completed: 20,
+  completionRate: 0.80,
+  readinessDistribution: {
+    READY: 15,
+    REVIEW_REQUIRED: 3,
+    FURTHER_PREPARATION: 2,
+    ESCALATE: 0,
+  },
+  competencyAverages: [
+    { competencyName: 'Algorithm Analysis', average: 0.79 },
+    { competencyName: 'Implementation Patterns', average: 0.73 },
+    { competencyName: 'Edge Cases', average: 0.68 },
+    { competencyName: 'Optimization', average: 0.81 },
+  ],
+};
+
+export const csMisconceptions: Misconception[] = [
+  {
+    id: 'cs-misc-1',
+    questionId: 'cs-q-1',
+    questionText: 'What is the worst-case time complexity of merge sort?',
+    competencyName: 'Algorithm Analysis',
+    incorrectAnswer: 'O(n^2)',
+    frequency: 6,
+    isCritical: false,
+  },
+  {
+    id: 'cs-misc-2',
+    questionId: 'cs-q-3',
+    questionText: 'What should a correct sorting algorithm do when given an empty array?',
+    competencyName: 'Edge Cases',
+    incorrectAnswer: 'Throw an error because there is nothing to sort',
+    frequency: 5,
+    isCritical: true,
+  },
+  {
+    id: 'cs-misc-3',
+    questionId: 'cs-q-2',
+    questionText: 'In quick sort, what happens during the partition step?',
+    competencyName: 'Implementation Patterns',
+    incorrectAnswer: 'The array is divided into two equal halves',
+    frequency: 8,
+    isCritical: false,
+  },
+  {
+    id: 'cs-misc-4',
+    questionId: 'cs-q-4',
+    questionText: 'What can happen if a sorting algorithm does not correctly handle identical elements?',
+    competencyName: 'Edge Cases',
+    incorrectAnswer: 'It will produce a sorted result but take slightly longer',
+    frequency: 4,
+    isCritical: true,
+  },
+];
+
+export const csInterventionList: InterventionItem[] = [
+  {
+    learnerId: 'cs-learner-3',
+    learnerName: 'Kai Nakamura',
+    status: 'REVIEW_REQUIRED',
+    failedCompetencies: ['Edge Cases'],
+    criticalFailures: ['Failed to identify correct handling of empty arrays'],
+    lastAttemptAt: '2026-08-04T10:15:00Z',
+    attemptCount: 1,
+  },
+  {
+    learnerId: 'cs-learner-7',
+    learnerName: 'Sarah Kim',
+    status: 'FURTHER_PREPARATION',
+    failedCompetencies: ['Algorithm Analysis', 'Implementation Patterns'],
+    criticalFailures: [],
+    lastAttemptAt: '2026-08-04T13:30:00Z',
+    attemptCount: 2,
+  },
+  {
+    learnerId: 'cs-learner-9',
+    learnerName: 'Liam O\'Brien',
+    status: 'REVIEW_REQUIRED',
+    failedCompetencies: ['Edge Cases'],
+    criticalFailures: ['Failed to identify infinite loop risk with duplicate elements'],
+    lastAttemptAt: '2026-08-04T15:45:00Z',
+    attemptCount: 1,
+  },
+];
+
+// CS Checkpoint Questions
+export const csCheckpointQuestions: CheckpointQuestion[] = [
+  {
+    id: 'cs-cp-1',
+    activityId: 'cs-act-1',
+    moduleVersionId: 'version-2',
+    questionText: 'Why does sorting enable more efficient searching?',
+    options: [
+      'Sorting makes all elements unique',
+      'Sorted data enables binary search with O(log n) time instead of O(n) linear search',
+      'Sorting removes duplicate elements',
+      'Sorted data requires less memory',
+    ],
+    correctAnswer: 'Sorted data enables binary search with O(log n) time instead of O(n) linear search',
+    explanation: 'Binary search requires sorted data and achieves O(log n) lookups by eliminating half the remaining elements at each step.',
+    failureHint: 'Re-read the first paragraph about what sorting enables. Focus on binary search and its time complexity.',
+    approvalStatus: 'approved',
+    approvedBy: 'user-instructor-2',
+    approvedAt: '2026-07-31T10:00:00Z',
+    generatedAt: '2026-07-30T09:00:00Z',
+    minimumReadSeconds: 20,
+  },
+  {
+    id: 'cs-cp-2',
+    activityId: 'cs-act-2',
+    moduleVersionId: 'version-2',
+    questionText: 'What is the time complexity of bubble sort in the worst case?',
+    options: [
+      'O(n)',
+      'O(n log n)',
+      'O(n^2)',
+      'O(1)',
+    ],
+    correctAnswer: 'O(n^2)',
+    explanation: 'Bubble sort compares adjacent elements in nested loops, resulting in O(n^2) comparisons in the worst and average case.',
+    failureHint: 'Look at the stated time complexity for bubble sort. What are the average and worst case?',
+    approvalStatus: 'approved',
+    approvedBy: 'user-instructor-2',
+    approvedAt: '2026-07-31T10:05:00Z',
+    generatedAt: '2026-07-30T09:00:00Z',
+    minimumReadSeconds: 25,
+  },
+  {
+    id: 'cs-cp-3',
+    activityId: 'cs-act-3',
+    moduleVersionId: 'version-2',
+    questionText: 'What is the additional space complexity of merge sort?',
+    options: [
+      'O(1) — it sorts in place',
+      'O(log n) — for the recursion stack',
+      'O(n) — for the merge buffer',
+      'O(n^2) — for storing all comparisons',
+    ],
+    correctAnswer: 'O(n) — for the merge buffer',
+    explanation: 'Merge sort requires O(n) additional space to hold elements during the merge operation.',
+    failureHint: 'Look for the space complexity statement. What buffer does merge sort need?',
+    approvalStatus: 'approved',
+    approvedBy: 'user-instructor-2',
+    approvedAt: '2026-07-31T10:10:00Z',
+    generatedAt: '2026-07-30T09:00:00Z',
+    minimumReadSeconds: 25,
+  },
+  {
+    id: 'cs-cp-4',
+    activityId: 'cs-act-4',
+    moduleVersionId: 'version-2',
+    questionText: 'What causes quick sort to degrade to O(n^2) performance?',
+    options: [
+      'Using too much memory',
+      'Having duplicate elements',
+      'Consistently choosing the smallest or largest element as pivot',
+      'Having an odd number of elements',
+    ],
+    correctAnswer: 'Consistently choosing the smallest or largest element as pivot',
+    explanation: 'When the pivot is always the extreme value, partitions are maximally unbalanced (one empty, one with n-1 elements), leading to O(n^2) behavior.',
+    failureHint: 'Look at the worst case description. What causes maximally unbalanced partitions?',
+    approvalStatus: 'approved',
+    approvedBy: 'user-instructor-2',
+    approvedAt: '2026-07-31T10:15:00Z',
+    generatedAt: '2026-07-30T09:00:00Z',
+    minimumReadSeconds: 30,
+  },
+  {
+    id: 'cs-cp-5',
+    activityId: 'cs-act-5',
+    moduleVersionId: 'version-2',
+    questionText: 'Why is it critical to test sorting algorithms with arrays of duplicate elements?',
+    options: [
+      'Duplicates make the array longer',
+      'Algorithms may infinite-loop or produce incorrect results if they do not handle equal elements',
+      'Duplicates are always removed during sorting',
+      'It only matters for arrays longer than 1000 elements',
+    ],
+    correctAnswer: 'Algorithms may infinite-loop or produce incorrect results if they do not handle equal elements',
+    explanation: 'Partition logic that does not account for equal elements can fail to make progress, causing infinite recursion or loops.',
+    failureHint: 'Look at the edge case about all-identical elements. What specific failures can occur?',
+    approvalStatus: 'approved',
+    approvedBy: 'user-instructor-2',
+    approvedAt: '2026-07-31T10:20:00Z',
+    generatedAt: '2026-07-30T09:00:00Z',
+    minimumReadSeconds: 30,
+  },
+  {
+    id: 'cs-cp-6',
+    activityId: 'cs-act-6',
+    moduleVersionId: 'version-2',
+    questionText: 'For a memory-constrained system, which sorting algorithms would be preferred?',
+    options: [
+      'Merge sort and counting sort',
+      'Quick sort and heap sort (both in-place)',
+      'Bubble sort and radix sort',
+      'Only external merge sort',
+    ],
+    correctAnswer: 'Quick sort and heap sort (both in-place)',
+    explanation: 'Quick sort and heap sort are in-place algorithms requiring only O(log n) additional space for the recursion stack, making them suitable for memory-constrained environments.',
+    failureHint: 'Look at the algorithm selection guide. Which algorithms are listed under memory-constrained?',
+    approvalStatus: 'approved',
+    approvedBy: 'user-instructor-2',
+    approvedAt: '2026-07-31T10:25:00Z',
+    generatedAt: '2026-07-30T09:00:00Z',
+    minimumReadSeconds: 20,
+  },
+];
+
+// CS Step Friction Data
+export const csStepFrictionData: StepFriction[] = [
+  {
+    activityId: 'cs-act-1',
+    activityTitle: 'Why Sorting Matters',
+    stepNumber: 1,
+    totalAttempts: 23,
+    firstAttemptPassRate: 0.91,
+    averageRetries: 1.1,
+    averageTimeSpent: 22,
+  },
+  {
+    activityId: 'cs-act-2',
+    activityTitle: 'Bubble Sort and Selection Sort',
+    stepNumber: 2,
+    totalAttempts: 23,
+    firstAttemptPassRate: 0.78,
+    averageRetries: 1.3,
+    averageTimeSpent: 38,
+  },
+  {
+    activityId: 'cs-act-3',
+    activityTitle: 'Merge Sort — Divide and Conquer',
+    stepNumber: 3,
+    totalAttempts: 23,
+    firstAttemptPassRate: 0.65,
+    averageRetries: 1.7,
+    averageTimeSpent: 52,
+  },
+  {
+    activityId: 'cs-act-4',
+    activityTitle: 'Quick Sort — Pivot and Partition',
+    stepNumber: 4,
+    totalAttempts: 23,
+    firstAttemptPassRate: 0.57,
+    averageRetries: 2.0,
+    averageTimeSpent: 65,
+  },
+  {
+    activityId: 'cs-act-5',
+    activityTitle: 'Edge Cases and Correctness',
+    stepNumber: 5,
+    totalAttempts: 23,
+    firstAttemptPassRate: 0.61,
+    averageRetries: 1.9,
+    averageTimeSpent: 48,
+  },
+  {
+    activityId: 'cs-act-6',
+    activityTitle: 'Choosing the Right Algorithm',
+    stepNumber: 6,
+    totalAttempts: 23,
+    firstAttemptPassRate: 0.83,
+    averageRetries: 1.2,
     averageTimeSpent: 30,
   },
 ];

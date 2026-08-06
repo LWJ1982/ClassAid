@@ -1,20 +1,140 @@
 "use client";
 
-import { cohortMetrics, misconceptions, interventionList, stepFrictionData } from "@/lib/data/seed";
+import { useState } from "react";
+import {
+  learningModule,
+  csModule,
+  cohortMetrics,
+  csCohortMetrics,
+  misconceptions,
+  csMisconceptions,
+  interventionList,
+  csInterventionList,
+  stepFrictionData,
+  csStepFrictionData,
+  domains,
+} from "@/lib/data/seed";
 import { useApp } from "../providers";
+import type { LearningModule, CohortMetrics, Misconception, InterventionItem, StepFriction } from "@/lib/domain/types";
+
+// Map module IDs to their data sets
+const moduleDataMap: Record<string, {
+  module: LearningModule;
+  metrics: CohortMetrics;
+  misconceptions: Misconception[];
+  interventions: InterventionItem[];
+  stepFriction: StepFriction[];
+}> = {
+  "module-1": {
+    module: learningModule,
+    metrics: cohortMetrics,
+    misconceptions: misconceptions,
+    interventions: interventionList,
+    stepFriction: stepFrictionData,
+  },
+  "module-2": {
+    module: csModule,
+    metrics: csCohortMetrics,
+    misconceptions: csMisconceptions,
+    interventions: csInterventionList,
+    stepFriction: csStepFrictionData,
+  },
+};
+
+const allModules: LearningModule[] = [learningModule, csModule];
 
 export function InstructorDashboard() {
-  const { currentUser } = useApp();
-  const metrics = cohortMetrics;
+  const { currentUser, enterPreviewMode } = useApp();
+
+  // Filter to only modules owned by this instructor
+  const ownedModules = allModules.filter((m) => m.ownerId === currentUser.id);
+  const [selectedModuleId, setSelectedModuleId] = useState<string>(ownedModules[0]?.id ?? "");
+
+  const data = moduleDataMap[selectedModuleId];
+  const instructorDomain = domains.find((d) => d.id === currentUser.domainId);
+
+  if (ownedModules.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Cohort Insights</h1>
+          <p className="text-slate-500 mt-1">Instructor: {currentUser.name}</p>
+        </div>
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8 text-center">
+          <p className="text-slate-500">No modules assigned to you yet.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Cohort Insights</h1>
+          <p className="text-slate-500 mt-1">Instructor: {currentUser.name}</p>
+        </div>
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8 text-center">
+          <p className="text-slate-500">Select a module to view insights.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const metrics = data.metrics;
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Cohort Insights</h1>
-        <p className="text-slate-500 mt-1">
-          Module: {metrics.moduleTitle} \u2022 Instructor: {currentUser.name}
-        </p>
+        <div className="flex items-center gap-3 mt-1">
+          <p className="text-slate-500">
+            Instructor: {currentUser.name}
+          </p>
+          {instructorDomain && (
+            <span className="inline-flex items-center rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700">
+              {instructorDomain.name}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Module selector (if instructor owns multiple modules) */}
+      {ownedModules.length > 1 && (
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+          <label htmlFor="module-selector" className="block text-sm font-medium text-slate-700 mb-2">
+            Select Module
+          </label>
+          <select
+            id="module-selector"
+            value={selectedModuleId}
+            onChange={(e) => setSelectedModuleId(e.target.value)}
+            className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          >
+            {ownedModules.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.title}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* Module title */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-slate-500">Currently viewing</p>
+            <p className="text-lg font-semibold text-slate-900">{metrics.moduleTitle}</p>
+          </div>
+          <button
+            onClick={() => enterPreviewMode(selectedModuleId)}
+            className="inline-flex items-center px-4 py-2 text-sm font-medium text-amber-800 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors"
+          >
+            &#x1F441; Preview as Learner
+          </button>
+        </div>
       </div>
 
       {/* Key metrics */}
@@ -63,7 +183,7 @@ export function InstructorDashboard() {
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
         <h2 className="text-lg font-semibold text-slate-900 mb-4">Top Misconceptions</h2>
         <div className="space-y-3">
-          {misconceptions.map((m) => (
+          {data.misconceptions.map((m) => (
             <div key={m.id} className={`p-4 rounded-lg border ${m.isCritical ? "bg-red-50 border-red-200" : "bg-slate-50 border-slate-200"}`}>
               <div className="flex items-start justify-between">
                 <div className="flex-1">
@@ -92,7 +212,7 @@ export function InstructorDashboard() {
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
         <h2 className="text-lg font-semibold text-slate-900 mb-4">
           Learners Requiring Intervention
-          <span className="ml-2 text-sm font-normal text-slate-500">({interventionList.length})</span>
+          <span className="ml-2 text-sm font-normal text-slate-500">({data.interventions.length})</span>
         </h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -106,7 +226,7 @@ export function InstructorDashboard() {
               </tr>
             </thead>
             <tbody>
-              {interventionList.map((item) => (
+              {data.interventions.map((item) => (
                 <tr key={item.learnerId} className="border-b border-slate-100 hover:bg-slate-50">
                   <td className="py-3 px-3 font-medium text-slate-900">{item.learnerName}</td>
                   <td className="py-3 px-3">
@@ -135,7 +255,7 @@ export function InstructorDashboard() {
           Which guided activity steps cause learners to struggle. High retry rates indicate content that needs clarification or a poorly worded checkpoint.
         </p>
         <div className="space-y-3">
-          {stepFrictionData
+          {data.stepFriction
             .sort((a, b) => a.firstAttemptPassRate - b.firstAttemptPassRate)
             .map((step) => {
               const frictionLevel = step.firstAttemptPassRate < 0.6 ? "high" : step.firstAttemptPassRate < 0.75 ? "medium" : "low";

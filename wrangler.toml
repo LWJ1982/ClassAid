@@ -3,23 +3,15 @@ compatibility_date = "2024-12-01"
 compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = "out"
 
-# D1 Database
-[[d1_databases]]
-binding = "DB"
-database_name = "classaid-db"
-database_id = "placeholder-replace-with-real-id"
-migrations_dir = "migrations"
-
-# R2 Bucket for file uploads
-[[r2_buckets]]
-binding = "BUCKET"
-bucket_name = "classaid-files"
-
-# Workers AI
+# Workers AI - used for BGE-base-en-v1.5 embeddings (768 dimensions)
 [ai]
 binding = "AI"
 
-# Vectorize Index
-[[vectorize]]
-binding = "VECTORIZE"
-index_name = "classaid-vectors"
+# Environment variables for Pages Functions
+# Note: Sensitive values (SUPABASE_SERVICE_ROLE_KEY, GROQ_API_KEY) must be set
+# via Cloudflare dashboard or wrangler CLI as secrets, NOT in this file.
+# See docs/DEPLOYMENT.md for full setup instructions.
+[vars]
+SUPABASE_URL = "https://your-project.supabase.co"
+# SUPABASE_SERVICE_ROLE_KEY = "set via: wrangler pages secret put SUPABASE_SERVICE_ROLE_KEY"
+# GROQ_API_KEY = "set via: wrangler pages secret put GROQ_API_KEY"

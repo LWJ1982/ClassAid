@@ -1,0 +1,33 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "Add instructor learner-preview mode that lets an instructor simulate the learner journey for any of their modules. The instructor can enter a preview mode that shows the full learner experience (guided activities, AI coach, assessment) without affecting real learner data.",
+  "status": "completed",
+  "steps": [
+    "1. In src/lib/domain/types.ts, add a PreviewMode type or flag interface: { active: boolean; moduleId: string; instructorId: string }.",
+    "2. In src/components/providers.tsx, add preview mode state: (a) isPreviewMode boolean, (b) previewModuleId string|null, (c) enterPreviewMode(moduleId: string) function, (d) exitPreviewMode() function. When preview mode is active, the learner components should render using the preview module's data. Preview mode state should be separate from the instructor's normal state.",
+    "3. Create src/components/instructor/learner-preview.tsx: A wrapper component that (a) shows a prominent banner at the top indicating 'PREVIEW MODE - Simulating Learner View' with an 'Exit Preview' button, (b) renders the full learner flow (module overview -> guided activities -> AI coach -> assessment -> readiness report) using the selected module's data, (c) any assessment answers in preview mode are discarded on exit (not persisted).",
+    "4. Add a 'Preview as Learner' button in the instructor's module management area (either in the dashboard or module config). This button calls enterPreviewMode(moduleId) and switches the view to the learner-preview component.",
+    "5. In src/components/main-router.tsx, add logic: if role is 'instructor' AND isPreviewMode is true, render the LearnerPreview component instead of the normal instructor views. When the instructor exits preview, return to their normal instructor dashboard.",
+    "6. Ensure preview mode works with both the electrical and CS modules - the preview renders the correct module's activities, questions, and competencies based on which module the instructor chose to preview.",
+    "7. Add 'preview' to the instructor sub-navigation or add it as a new InstructorView option. The preview tab only appears when preview mode is active."
+  ],
+  "acceptance_criteria": [
+    "Instructor can click 'Preview as Learner' from their dashboard or module config",
+    "Preview mode shows a clear banner indicating it is a simulation",
+    "Preview mode renders the full learner journey (overview, activities, coach, assessment, report)",
+    "Preview mode uses the selected module's data (works for both electrical and CS modules)",
+    "Exiting preview mode returns to the instructor dashboard",
+    "Assessment answers in preview mode are not persisted after exit",
+    "TypeScript typecheck passes",
+    "All existing tests pass",
+    "Build succeeds"
+  ],
+  "verification": [
+    "eval \"$(mise env)\" && cd /projects/sandbox/ClassAid && pnpm run typecheck",
+    "eval \"$(mise env)\" && cd /projects/sandbox/ClassAid && pnpm run test -- --run",
+    "eval \"$(mise env)\" && cd /projects/sandbox/ClassAid && pnpm run build"
+  ],
+  "blocked_reason": null,
+  "findings": "Implementation uses a self-contained preview component architecture - separate PreviewOverview, PreviewActivity, PreviewAssessment, PreviewReport components that take module data as props (via preview-data.ts helper). This avoids modifying existing learner components. The AI Coach step is a placeholder in preview mode since it requires live API calls. Preview assessment results are stored in a module-level store (previewResultStore) to pass between sibling components without lifting state to the parent or polluting the global context. All preview state is ephemeral - not persisted to localStorage."
+}
