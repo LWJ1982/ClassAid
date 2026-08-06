@@ -1,0 +1,7 @@
+{
+  "task_id": "task-mvp-dashboards-users",
+  "task_description": "Expand the Class AId MVP with personalized dashboards for each role, a second Computer Science domain with users, admin user management (add/remove learners and instructors), and instructor learner-preview mode to simulate the learner journey.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003"],
+  "blocked_reason": null
+}

@@ -1,0 +1,29 @@
+{
+  "project_type": "Next.js 15.5.2 App Router with static export, Tailwind CSS, Supabase Auth, Cloudflare Pages Functions",
+  "language": "TypeScript strict mode",
+  "build_system": "pnpm 10.28.1 with next build (static export to out/). Node.js requires mise activation: eval \"$(mise env)\"",
+  "test_framework": "Vitest with tests in tests/ directory (tests/engine/, tests/lib/)",
+  "build_command": "eval \"$(mise env)\" && cd /projects/sandbox/ClassAid && pnpm run build",
+  "test_command": "eval \"$(mise env)\" && cd /projects/sandbox/ClassAid && pnpm run test -- --run",
+  "verification_instructions": "1. Run typecheck: pnpm run typecheck. 2. Run tests: pnpm run test -- --run. 3. Run build: pnpm run build. All must pass with zero errors.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "eval \"$(mise env)\" && cd /projects/sandbox/ClassAid && corepack enable (node 22 + pnpm 10.28.1 already installed via mise)",
+  "environment_constraints": "Node.js 22 installed via mise; must run eval \"$(mise env)\" before any node/pnpm commands. OPEN_INTERNET network mode - full access available.",
+  "contribution_requirements": "TypeScript strict mode, Tailwind CSS for styling, Zod for validation, cross-domain (no hardcoded discipline logic), demo mode must work without Supabase, secrets never exposed to client, scoring is server-side only.",
+  "key_patterns": "Demo mode uses demoUsers array from seed.ts with role switcher in navigation. AppProvider in providers.tsx manages all state via React Context + localStorage persistence. MainRouter routes by role. Each role view is a top-level component (LearnerDashboard, InstructorDashboard, AdminRegistry). Instructor has sub-navigation tabs (insights/configure/checkpoints/content). The demo role switcher picks the first user from demoUsers matching the selected role. DemoUser type: { id, name, role, email }.",
+  "relevant_files": [
+    "src/lib/data/seed.ts",
+    "src/lib/domain/types.ts",
+    "src/components/providers.tsx",
+    "src/components/main-router.tsx",
+    "src/components/navigation.tsx",
+    "src/components/main-content.tsx",
+    "src/components/learner/dashboard.tsx",
+    "src/components/instructor/dashboard.tsx",
+    "src/components/admin/registry.tsx",
+    "src/components/auth/auth-provider.tsx",
+    "src/lib/persistence.ts",
+    "src/app/page.tsx"
+  ],
+  "directory_structure": "src/app/ (page entry), src/components/ (learner/, instructor/, admin/, auth/, shared UI), src/lib/ (domain/types, engine/, data/seed, api-client, persistence), functions/api/ (Cloudflare Pages Functions), tests/ (engine/, lib/), migrations/ (Supabase schema)"
+}

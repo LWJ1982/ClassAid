@@ -259,4 +259,5 @@ export interface DemoUser {
   name: string;
   role: Role;
   email: string;
+  domainId?: string;
 }

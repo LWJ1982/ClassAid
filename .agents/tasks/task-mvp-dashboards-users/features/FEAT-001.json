@@ -1,0 +1,35 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Expand seed data to include a second domain (Computer Science), a second module, 7 user accounts (4 learners, 2 instructors, 1 admin), and update the demo user switcher to allow switching between individual users (not just roles). Also update the AppProvider to support per-user context and the navigation to show a user picker in demo mode.",
+  "status": "in_progress",
+  "steps": [
+    "1. In src/lib/domain/types.ts, add a DemoUserWithDomain type or extend DemoUser to include a domainId field so we know which domain each user is associated with. Keep existing DemoUser type unchanged for backward compatibility - add optional domainId.",
+    "2. In src/lib/data/seed.ts, add a second domain: { id: 'domain-2', name: 'Computer Science', description: 'Programming fundamentals, algorithms, data structures, and software development practices', complianceLabel: 'Academic Integrity' }. Export it alongside the existing domain (rename 'domain' export to 'domains' array or export both individually).",
+    "3. In src/lib/data/seed.ts, add a second module for Computer Science: { id: 'module-2', domainId: 'domain-2', title: 'Introduction to Sorting Algorithms', description: 'Understand fundamental sorting algorithms, their time complexities, trade-offs, and appropriate use cases before implementing them in practical exercises.', ownerId: 'user-instructor-2', status: 'published', activeVersionId: 'version-2', estimatedMinutes: 20 }. Add corresponding moduleVersion, objectives, competencies (e.g., Algorithm Analysis, Implementation Patterns, Edge Cases, Optimization), activities (5-7 guided steps covering bubble/selection/merge/quick sort with complexity analysis), and 5 assessment questions (2 critical relating to algorithm correctness). Follow the exact same patterns as the existing module-1 data.",
+    "4. In src/lib/data/seed.ts, expand demoUsers to 7 accounts: learner Alex Tan (user-learner-1, domain-1), learner Rachel Ng (user-learner-2, domain-1), learner Jordan Lee (user-learner-3, domain-2), learner Mei Chen (user-learner-4, domain-2), instructor Dr Sarah Lim (user-instructor-1, domain-1), instructor Prof David Tan (user-instructor-2, domain-2), admin Daniel Wong (user-admin-1). Each user gets domainId to indicate their primary domain assignment.",
+    "5. Update moduleRegistry in seed.ts to include the new Computer Science module with Prof David Tan as owner. Update the existing 'module-2' entry (Oscilloscope) to become 'module-3' or rename it, and make the CS module 'module-2'.",
+    "6. Add cohort metrics, misconceptions, and intervention data for the CS module (following the same structure as existing electrical module data) so the CS instructor has data to view.",
+    "7. In src/components/navigation.tsx, replace the simple role switcher with a user picker dropdown in demo mode. Show all 7 users grouped by role. When a user is selected, update both the current user AND the role. The existing role switcher buttons can remain as quick shortcuts but selecting a user should take precedence.",
+    "8. In src/components/providers.tsx, update AppProvider: (a) add state for selectedDemoUserId (defaults to 'user-learner-1'), (b) derive currentUser from selectedDemoUserId rather than just finding first user with matching role, (c) add setCurrentDemoUser(userId) function to context, (d) when a demo user is selected, also update the role accordingly. The role setter should also switch to the first user of that role (for backward compat with the role shortcut buttons).",
+    "9. Update src/lib/persistence.ts PersistedState interface to include selectedDemoUserId so demo user selection persists across refreshes.",
+    "10. Ensure all existing imports of seed data (domain, learningModule, demoUsers, cohortMetrics, etc.) continue to work. If exports are renamed, update all import sites. Run typecheck to confirm."
+  ],
+  "acceptance_criteria": [
+    "demoUsers array contains exactly 7 users with correct roles and domain assignments",
+    "A second domain 'Computer Science' exists in seed data with its own module, competencies, activities, and questions",
+    "The navigation user picker shows all 7 demo users grouped by role",
+    "Switching demo users updates both currentUser and role in context",
+    "Selected demo user persists across page refresh via localStorage",
+    "TypeScript typecheck passes (pnpm run typecheck)",
+    "All existing tests pass (pnpm run test -- --run)",
+    "Build succeeds (pnpm run build)"
+  ],
+  "verification": [
+    "eval \"$(mise env)\" && cd /projects/sandbox/ClassAid && pnpm run typecheck",
+    "eval \"$(mise env)\" && cd /projects/sandbox/ClassAid && pnpm run test -- --run",
+    "eval \"$(mise env)\" && cd /projects/sandbox/ClassAid && pnpm run build"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

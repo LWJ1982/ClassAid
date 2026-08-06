@@ -7,6 +7,7 @@ const STORAGE_KEY = "classaid_state";
 
 export interface PersistedState {
   role: string;
+  selectedDemoUserId: string;
   activityProgress: number;
   assessmentAnswers: Record<string, string>;
   assessmentSubmitted: boolean;

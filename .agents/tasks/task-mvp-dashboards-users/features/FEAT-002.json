@@ -1,0 +1,34 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Build personalized dashboards for each role and add the admin user management panel. Learner dashboard shows only modules assigned to their domain. Instructor dashboard is personalized to their modules and domain. Admin gets a new user management panel (add/remove learners and instructors) alongside the existing module registry.",
+  "status": "pending",
+  "steps": [
+    "1. Update src/components/learner/dashboard.tsx to show personalized content: (a) filter modules to only those in the current learner's domain, (b) show a welcome with the learner's full name, (c) display domain badge, (d) show multiple module cards if multiple exist in the domain (iterate over a modules array rather than hardcoding one module), (e) show per-module progress indicator (not started / in progress / completed).",
+    "2. Update src/components/instructor/dashboard.tsx to be personalized: (a) filter to show only modules owned by the current instructor (match ownerId to currentUser.id), (b) show the instructor's domain context, (c) keep all existing cohort metrics, misconceptions, intervention list, and step friction sections but filter data by the instructor's modules. Add a module selector dropdown if the instructor owns multiple modules.",
+    "3. Create src/components/admin/user-management.tsx: a full user management panel with (a) a table listing all users (name, email, role, domain), (b) an 'Add User' button that opens a form/modal to create a new user (name, email, role selector limited to learner/instructor, domain selector), (c) a 'Remove' button on each user row (with confirmation), (d) state management via context (add/remove users from the demoUsers-based list). Admin cannot remove themselves.",
+    "4. Update src/components/admin/registry.tsx or create a new admin layout component: The admin view should have sub-navigation tabs similar to the instructor view (Module Registry tab + User Management tab). Update main-router.tsx to support admin sub-navigation with state for switching between 'registry' and 'users' views.",
+    "5. In src/components/providers.tsx, add user management state: (a) add 'users' state initialized from demoUsers, (b) add addUser(user: DemoUser) and removeUser(userId: string) functions, (c) persist users list in localStorage. The user management is demo-only and does not call any API.",
+    "6. Update src/components/main-router.tsx: (a) add AdminView type ('registry' | 'users'), (b) add admin sub-navigation tabs in the admin role section (similar to instructor tabs), (c) render AdminRegistry for 'registry' tab and UserManagement for 'users' tab.",
+    "7. Ensure domain-based filtering works correctly: learners in domain-1 see only electrical modules, learners in domain-2 see only CS modules. Instructors see only their own modules. Admin sees everything."
+  ],
+  "acceptance_criteria": [
+    "Learner dashboard shows only modules from their assigned domain",
+    "Instructor dashboard filters cohort data to only their owned modules",
+    "Admin view has two tabs: Module Registry and User Management",
+    "Admin user management panel shows all users in a table with name, email, role, domain columns",
+    "Admin can add a new user (learner or instructor) via a form with name, email, role, and domain fields",
+    "Admin can remove a user (with confirmation dialog) - cannot remove themselves",
+    "User management changes persist in localStorage",
+    "TypeScript typecheck passes",
+    "All existing tests pass",
+    "Build succeeds"
+  ],
+  "verification": [
+    "eval \"$(mise env)\" && cd /projects/sandbox/ClassAid && pnpm run typecheck",
+    "eval \"$(mise env)\" && cd /projects/sandbox/ClassAid && pnpm run test -- --run",
+    "eval \"$(mise env)\" && cd /projects/sandbox/ClassAid && pnpm run build"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

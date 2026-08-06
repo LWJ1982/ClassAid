@@ -19,6 +19,7 @@ interface AppState {
   currentUser: DemoUser;
   role: Role;
   setRole: (role: Role) => void;
+  setCurrentDemoUser: (userId: string) => void;
   // Learner state
   activityProgress: number;
   setActivityProgress: (step: number) => void;
@@ -61,6 +62,11 @@ function getInitialConfig(): ModuleConfig {
 export function AppProvider({ children }: { children: ReactNode }) {
   const { isDemo, role: authRole, user } = useAuth();
   const [hydrated, setHydrated] = useState(false);
+  const [selectedDemoUserId, setSelectedDemoUserId] = useState<string>(() => {
+    if (typeof window === "undefined") return "user-learner-1";
+    const saved = loadState();
+    return saved?.selectedDemoUserId ?? "user-learner-1";
+  });
   const [role, setRoleState] = useState<Role>(() => {
     if (typeof window === "undefined") return "learner";
     const saved = loadState();
@@ -105,6 +111,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (!hydrated) return;
     saveState({
       role,
+      selectedDemoUserId,
       activityProgress,
       assessmentAnswers,
       assessmentSubmitted,
@@ -112,13 +119,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       attemptAnswers,
       moduleConfig,
     });
-  }, [hydrated, role, activityProgress, assessmentAnswers, assessmentSubmitted, readinessResult, attemptAnswers, moduleConfig]);
+  }, [hydrated, role, selectedDemoUserId, activityProgress, assessmentAnswers, assessmentSubmitted, readinessResult, attemptAnswers, moduleConfig]);
 
   // When authenticated (not demo), derive role from auth context
   const effectiveRole: Role = isDemo ? role : authRole;
 
   const currentUser = isDemo
-    ? (demoUsers.find((u) => u.role === effectiveRole) ?? demoUsers[0])
+    ? (demoUsers.find((u) => u.id === selectedDemoUserId) ?? demoUsers[0])
     : {
         id: user?.id ?? "anonymous",
         name: user?.user_metadata?.name ?? user?.email ?? "User",
@@ -130,6 +137,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
     // Only allow role switching in demo mode
     if (isDemo) {
       setRoleState(newRole);
+      // When switching role via shortcut, select the first user of that role
+      const firstUserOfRole = demoUsers.find((u) => u.role === newRole);
+      if (firstUserOfRole) {
+        setSelectedDemoUserId(firstUserOfRole.id);
+      }
+    }
+  }, [isDemo]);
+
+  const setCurrentDemoUser = useCallback((userId: string) => {
+    if (!isDemo) return;
+    const targetUser = demoUsers.find((u) => u.id === userId);
+    if (targetUser) {
+      setSelectedDemoUserId(userId);
+      setRoleState(targetUser.role);
     }
   }, [isDemo]);
 
@@ -212,6 +233,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const resetDemo = useCallback(() => {
     clearState();
+    setSelectedDemoUserId("user-learner-1");
     setRoleState("learner");
     setActivityProgress(0);
     setAssessmentAnswersState({});
@@ -227,6 +249,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         currentUser,
         role: effectiveRole,
         setRole,
+        setCurrentDemoUser,
         activityProgress,
         setActivityProgress,
         assessmentAnswers,
