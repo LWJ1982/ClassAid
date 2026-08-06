@@ -9,6 +9,6 @@
     "tests": "pass",
     "test_quality": "pass",
     "docker_build": "skipped",
-    "summary": "TypeScript typecheck clean, all 56 tests pass, static build to out/ succeeds. No new tests were required as these are UI component additions with demo data."
+    "summary": "TypeScript typecheck clean, all 56 tests pass, static build to out/ succeeds. Review fixes applied: learner flow is now module-aware, preview state uses lifted React state instead of mutable singleton, removeUser guards against removing active user, addUser validates email uniqueness."
   }
 }
