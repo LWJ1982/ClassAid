@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "Expand seed data to include a second domain (Computer Science), a second module, 7 user accounts (4 learners, 2 instructors, 1 admin), and update the demo user switcher to allow switching between individual users (not just roles). Also update the AppProvider to support per-user context and the navigation to show a user picker in demo mode.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. In src/lib/domain/types.ts, add a DemoUserWithDomain type or extend DemoUser to include a domainId field so we know which domain each user is associated with. Keep existing DemoUser type unchanged for backward compatibility - add optional domainId.",
     "2. In src/lib/data/seed.ts, add a second domain: { id: 'domain-2', name: 'Computer Science', description: 'Programming fundamentals, algorithms, data structures, and software development practices', complianceLabel: 'Academic Integrity' }. Export it alongside the existing domain (rename 'domain' export to 'domains' array or export both individually).",
@@ -31,5 +31,5 @@
     "eval \"$(mise env)\" && cd /projects/sandbox/ClassAid && pnpm run build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 56 existing tests pass. Build and typecheck succeed. The existing 'domain' and 'learningModule' exports remain unchanged for backward compatibility. New CS data is exported as separate named exports (csModule, csModuleVersion, csCompetencies, etc.). The moduleRegistry now has 3 entries with the CS module as module-2 and the Oscilloscope draft as module-3. The navigation now has both role shortcut buttons AND a user picker dropdown. setCurrentDemoUser is available in the app context."
 }

@@ -10,14 +10,15 @@ export function UserManagement() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null);
 
-  // Form state
   const [formName, setFormName] = useState("");
   const [formEmail, setFormEmail] = useState("");
   const [formRole, setFormRole] = useState<"learner" | "instructor">("learner");
   const [formDomainId, setFormDomainId] = useState(domains[0]?.id ?? "");
+  const [formError, setFormError] = useState<string | null>(null);
 
   const handleAddUser = () => {
     if (!formName.trim() || !formEmail.trim()) return;
+    setFormError(null);
 
     const newUser: DemoUser = {
       id: `user-${Date.now()}`,
@@ -27,7 +28,11 @@ export function UserManagement() {
       domainId: formDomainId,
     };
 
-    addUser(newUser);
+    const success = addUser(newUser);
+    if (!success) {
+      setFormError("A user with this email already exists.");
+      return;
+    }
     setFormName("");
     setFormEmail("");
     setFormRole("learner");
@@ -35,8 +40,14 @@ export function UserManagement() {
     setShowAddForm(false);
   };
 
+  const [removeError, setRemoveError] = useState<string | null>(null);
+
   const handleRemoveUser = (userId: string) => {
-    removeUser(userId);
+    setRemoveError(null);
+    const success = removeUser(userId);
+    if (!success) {
+      setRemoveError("Cannot remove the currently active demo user. Switch to a different user first.");
+    }
     setConfirmRemoveId(null);
   };
 
@@ -149,6 +160,9 @@ export function UserManagement() {
             </div>
           </div>
           <div className="flex items-center gap-3 mt-6">
+            {formError && (
+              <p className="text-sm text-red-600 mr-auto">{formError}</p>
+            )}
             <button
               onClick={handleAddUser}
               disabled={!formName.trim() || !formEmail.trim()}
@@ -157,12 +171,19 @@ export function UserManagement() {
               Add User
             </button>
             <button
-              onClick={() => setShowAddForm(false)}
+              onClick={() => { setShowAddForm(false); setFormError(null); }}
               className="inline-flex items-center px-4 py-2 bg-white text-slate-700 text-sm font-medium rounded-lg border border-slate-300 hover:bg-slate-50 transition-colors"
             >
               Cancel
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Remove error */}
+      {removeError && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+          {removeError}
         </div>
       )}
 

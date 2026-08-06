@@ -7,7 +7,7 @@ import type { AttemptAnswer, ReadinessResult } from "@/lib/domain/types";
 
 interface Props {
   data: PreviewModuleData;
-  onComplete: () => void;
+  onComplete: (result: ReadinessResult, answers: AttemptAnswer[]) => void;
   onBack: () => void;
 }
 
@@ -17,7 +17,6 @@ export function PreviewAssessment({ data, onComplete, onBack }: Props) {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [showReview, setShowReview] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState<ReadinessResult | null>(null);
 
   const answeredCount = Object.keys(answers).length;
   const allAnswered = answeredCount === questions.length;
@@ -46,28 +45,10 @@ export function PreviewAssessment({ data, onComplete, onBack }: Props) {
         competencies,
         overallThreshold: 0.8,
       });
-      setResult(readinessResult);
       setSubmitting(false);
-      onComplete();
+      onComplete(readinessResult, attemptAnswers);
     }, 800);
   };
-
-  // Expose result for the report step via a shared approach
-  // We store it in a module-level ref that PreviewReport can access
-  if (result) {
-    previewResultStore.result = result;
-    previewResultStore.answers = questions.map((q) => {
-      const selected = answers[q.id];
-      return {
-        id: `preview-ans-${q.id}`,
-        attemptId: "preview-attempt",
-        questionId: q.id,
-        selectedAnswer: selected,
-        isCorrect: selected === q.correctAnswer,
-        isCriticalFailure: q.critical && selected !== q.correctAnswer,
-      };
-    });
-  }
 
   if (showReview) {
     return (
@@ -143,10 +124,3 @@ export function PreviewAssessment({ data, onComplete, onBack }: Props) {
     </div>
   );
 }
-
-// Simple store to pass result between preview assessment and preview report
-// This avoids lifting state since both are siblings rendered by LearnerPreview
-export const previewResultStore: { result: ReadinessResult | null; answers: AttemptAnswer[] } = {
-  result: null,
-  answers: [],
-};

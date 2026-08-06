@@ -5,7 +5,7 @@ import { useApp } from "../providers";
 import type { LearningModule, Domain, ModuleVersion } from "@/lib/domain/types";
 
 interface Props {
-  onStart: () => void;
+  onStart: (moduleId: string) => void;
 }
 
 // All available modules with their domain and version data
@@ -97,7 +97,7 @@ export function LearnerDashboard({ onStart }: Props) {
 
             <div className="mt-6 flex items-center gap-3">
               <button
-                onClick={onStart}
+                onClick={() => onStart(mod.id)}
                 className="inline-flex items-center px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
               >
                 {assessmentSubmitted && mod.id === "module-1" ? "Review Module" : "Start Preparation"}

@@ -24,7 +24,7 @@ export type InstructorView = "insights" | "configure" | "checkpoints" | "content
 export type AdminView = "registry" | "users";
 
 export function MainRouter() {
-  const { role, assessmentSubmitted, readinessResult, isPreviewMode } = useApp();
+  const { role, assessmentSubmitted, readinessResult, isPreviewMode, setSelectedModuleId } = useApp();
   const { isDemo, user, isLoading } = useAuth();
   const [learnerView, setLearnerView] = useState<LearnerView>("dashboard");
   const [instructorView, setInstructorView] = useState<InstructorView>("insights");
@@ -156,7 +156,7 @@ export function MainRouter() {
   // Learner flow
   switch (learnerView) {
     case "dashboard":
-      return <LearnerDashboard onStart={() => setLearnerView("overview")} />;
+      return <LearnerDashboard onStart={(moduleId: string) => { setSelectedModuleId(moduleId); setLearnerView("overview"); }} />;
     case "overview":
       return <ModuleOverview onStartActivity={() => setLearnerView("activity")} onBack={() => setLearnerView("dashboard")} />;
     case "activity":
@@ -168,6 +168,6 @@ export function MainRouter() {
     case "report":
       return <ReadinessReport onRetry={() => setLearnerView("assessment")} onBackToDashboard={() => setLearnerView("dashboard")} />;
     default:
-      return <LearnerDashboard onStart={() => setLearnerView("overview")} />;
+      return <LearnerDashboard onStart={(moduleId: string) => { setSelectedModuleId(moduleId); setLearnerView("overview"); }} />;
   }
 }

@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
 import type { Role, DemoUser, ReadinessResult, AttemptAnswer, Competency, AssessmentQuestion, GuidedActivity, CheckpointQuestion, CheckpointApprovalStatus } from "@/lib/domain/types";
 import { demoUsers, competencies as seedCompetencies, questions as seedQuestions, activities as seedActivities, checkpointQuestions as seedCheckpoints } from "@/lib/data/seed";
+import { getModuleDataById } from "@/lib/data/module-data";
 import { saveState, loadState, clearState, saveUsers, loadUsers, clearUsers } from "@/lib/persistence";
 import { useAuth } from "@/components/auth/auth-provider";
 
@@ -22,8 +23,11 @@ interface AppState {
   setCurrentDemoUser: (userId: string) => void;
   // User management (admin)
   users: DemoUser[];
-  addUser: (user: DemoUser) => void;
-  removeUser: (userId: string) => void;
+  addUser: (user: DemoUser) => boolean;
+  removeUser: (userId: string) => boolean;
+  // Module selection (learner)
+  selectedModuleId: string | null;
+  setSelectedModuleId: (moduleId: string | null) => void;
   // Learner state
   activityProgress: number;
   setActivityProgress: (step: number) => void;
@@ -58,7 +62,19 @@ interface AppState {
 
 const AppContext = createContext<AppState | null>(null);
 
-function getInitialConfig(): ModuleConfig {
+function getInitialConfig(moduleId?: string): ModuleConfig {
+  if (moduleId) {
+    const data = getModuleDataById(moduleId);
+    if (data) {
+      return {
+        overallThreshold: 0.8,
+        competencies: JSON.parse(JSON.stringify(data.competencies)),
+        questions: JSON.parse(JSON.stringify(data.questions)),
+        activities: JSON.parse(JSON.stringify(data.activities)),
+        checkpoints: JSON.parse(JSON.stringify(data.checkpoints)),
+      };
+    }
+  }
   return {
     overallThreshold: 0.8,
     competencies: JSON.parse(JSON.stringify(seedCompetencies)),
@@ -118,9 +134,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return saved ?? [...demoUsers];
   });
 
+  // Selected module for learner flow (not persisted - resets when switching users)
+  const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
+
   // Preview mode state (not persisted - resets on refresh)
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [previewModuleId, setPreviewModuleId] = useState<string | null>(null);
+
+  // When selectedModuleId changes, update moduleConfig to match (for learner flow)
+  useEffect(() => {
+    if (selectedModuleId) {
+      setModuleConfig(getInitialConfig(selectedModuleId));
+    }
+  }, [selectedModuleId]);
 
   // Mark hydrated after first render (canonical hydration pattern)
   useEffect(() => { setHydrated(true); }, []);
@@ -225,13 +251,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setModuleConfig(getInitialConfig());
   }, []);
 
-  const addUser = useCallback((newUser: DemoUser) => {
+  const addUser = useCallback((newUser: DemoUser): boolean => {
+    // Check email uniqueness
+    const emailExists = users.some((u) => u.email.toLowerCase() === newUser.email.toLowerCase());
+    if (emailExists) return false;
     setUsers((prev) => [...prev, newUser]);
-  }, []);
+    return true;
+  }, [users]);
 
-  const removeUser = useCallback((userId: string) => {
+  const removeUser = useCallback((userId: string): boolean => {
+    // Guard: do not allow removing the currently selected demo user
+    if (userId === selectedDemoUserId) return false;
     setUsers((prev) => prev.filter((u) => u.id !== userId));
-  }, []);
+    return true;
+  }, [selectedDemoUserId]);
 
   const updateCheckpoint = useCallback((checkpointId: string, updates: Partial<CheckpointQuestion>) => {
     setModuleConfig((prev) => ({
@@ -288,6 +321,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setUsers([...demoUsers]);
     setIsPreviewMode(false);
     setPreviewModuleId(null);
+    setSelectedModuleId(null);
   }, []);
 
   return (
@@ -300,6 +334,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         users,
         addUser,
         removeUser,
+        selectedModuleId,
+        setSelectedModuleId,
         activityProgress,
         setActivityProgress,
         assessmentAnswers,

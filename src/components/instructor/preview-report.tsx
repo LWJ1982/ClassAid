@@ -1,16 +1,16 @@
 "use client";
 
 import type { PreviewModuleData } from "./preview-data";
-import { previewResultStore } from "./preview-assessment";
+import type { ReadinessResult, AttemptAnswer } from "@/lib/domain/types";
 
 interface Props {
   data: PreviewModuleData;
+  result: ReadinessResult | null;
+  attemptAnswers: AttemptAnswer[];
   onBack: () => void;
 }
 
-export function PreviewReport({ data, onBack }: Props) {
-  const result = previewResultStore.result;
-  const attemptAnswers = previewResultStore.answers;
+export function PreviewReport({ data, result, attemptAnswers, onBack }: Props) {
   const { questions } = data;
 
   if (!result) {

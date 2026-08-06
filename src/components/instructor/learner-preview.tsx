@@ -7,14 +7,23 @@ import { PreviewOverview } from "./preview-overview";
 import { PreviewActivity } from "./preview-activity";
 import { PreviewAssessment } from "./preview-assessment";
 import { PreviewReport } from "./preview-report";
+import type { ReadinessResult, AttemptAnswer } from "@/lib/domain/types";
 
 type PreviewStep = "overview" | "activity" | "coach" | "assessment" | "report";
 
 export function LearnerPreview() {
   const { exitPreviewMode, previewModuleId } = useApp();
   const [step, setStep] = useState<PreviewStep>("overview");
+  const [previewResult, setPreviewResult] = useState<ReadinessResult | null>(null);
+  const [previewAnswers, setPreviewAnswers] = useState<AttemptAnswer[]>([]);
 
   const moduleData = getModuleData(previewModuleId ?? "");
+
+  const handleAssessmentComplete = (result: ReadinessResult, answers: AttemptAnswer[]) => {
+    setPreviewResult(result);
+    setPreviewAnswers(answers);
+    setStep("report");
+  };
 
   if (!moduleData) {
     return (
@@ -49,13 +58,15 @@ export function LearnerPreview() {
       {step === "assessment" && (
         <PreviewAssessment
           data={moduleData}
-          onComplete={() => setStep("report")}
+          onComplete={handleAssessmentComplete}
           onBack={() => setStep("coach")}
         />
       )}
       {step === "report" && (
         <PreviewReport
           data={moduleData}
+          result={previewResult}
+          attemptAnswers={previewAnswers}
           onBack={() => setStep("overview")}
         />
       )}

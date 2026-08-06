@@ -10,14 +10,38 @@ interface Props {
   onBack: () => void;
 }
 
+const suggestedQuestionsByModule: Record<string, string[]> = {
+  "module-1": [
+    "Why is voltage measured in parallel?",
+    "How do I connect probes for current measurement?",
+    "What are the critical safety rules?",
+    "Why can't I measure resistance in a live circuit?",
+    "What does OL mean on the display?",
+  ],
+  "module-2": [
+    "What is the time complexity of merge sort?",
+    "When should I use quicksort over merge sort?",
+    "How does bubble sort compare to selection sort?",
+    "What are stable vs unstable sorting algorithms?",
+    "Why does quicksort perform poorly on sorted data?",
+  ],
+};
+
+function getSuggestedQuestions(moduleId: string | null): string[] {
+  if (moduleId && suggestedQuestionsByModule[moduleId]) {
+    return suggestedQuestionsByModule[moduleId];
+  }
+  return suggestedQuestionsByModule["module-1"];
+}
+
 export function AICoach({ onProceedToAssessment, onBack }: Props) {
-  const { currentUser } = useApp();
+  const { currentUser, selectedModuleId } = useApp();
   const [messages, setMessages] = useState<CoachMessage[]>([
     {
       id: "welcome",
       role: "assistant",
       content:
-        "Hello! I\u2019m your AI Coach for this module. I can help you understand concepts about digital multimeter measurement, connection procedures, safety rules, and common errors.\n\nI answer based on approved module material and will always cite my sources. I cannot reveal assessment answers, but I can explain underlying concepts.\n\nWhat would you like to know?",
+        "Hello! I\u2019m your AI Coach for this module. I can help you understand concepts covered in the learning material.\n\nI answer based on approved module material and will always cite my sources. I cannot reveal assessment answers, but I can explain underlying concepts.\n\nWhat would you like to know?",
       category: "CONCEPT",
       grounding: "SUPPORTED",
       citations: [],
@@ -51,7 +75,7 @@ export function AICoach({ onProceedToAssessment, onBack }: Props) {
 
     try {
       const response = await apiClient.chat({
-        moduleId: "module-1",
+        moduleId: selectedModuleId ?? "module-1",
         message: trimmed,
         conversationId,
         learnerId: currentUser.id,
@@ -191,7 +215,7 @@ export function AICoach({ onProceedToAssessment, onBack }: Props) {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSend()}
-              placeholder="Ask about measurement concepts, procedures, or safety..."
+              placeholder="Ask about concepts, procedures, or key topics in this module..."
               className="flex-1 px-4 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               disabled={isTyping}
             />
@@ -215,13 +239,7 @@ export function AICoach({ onProceedToAssessment, onBack }: Props) {
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
         <p className="text-xs font-medium text-slate-500 mb-3">Try asking:</p>
         <div className="flex flex-wrap gap-2">
-          {[
-            "Why is voltage measured in parallel?",
-            "How do I connect probes for current measurement?",
-            "What are the critical safety rules?",
-            "Why can't I measure resistance in a live circuit?",
-            "What does OL mean on the display?",
-          ].map((q) => (
+          {getSuggestedQuestions(selectedModuleId).map((q) => (
             <button
               key={q}
               onClick={() => { setInput(q); }}
