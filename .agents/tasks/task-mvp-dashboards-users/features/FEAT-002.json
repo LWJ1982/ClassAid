@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "Build personalized dashboards for each role and add the admin user management panel. Learner dashboard shows only modules assigned to their domain. Instructor dashboard is personalized to their modules and domain. Admin gets a new user management panel (add/remove learners and instructors) alongside the existing module registry.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. Update src/components/learner/dashboard.tsx to show personalized content: (a) filter modules to only those in the current learner's domain, (b) show a welcome with the learner's full name, (c) display domain badge, (d) show multiple module cards if multiple exist in the domain (iterate over a modules array rather than hardcoding one module), (e) show per-module progress indicator (not started / in progress / completed).",
     "2. Update src/components/instructor/dashboard.tsx to be personalized: (a) filter to show only modules owned by the current instructor (match ownerId to currentUser.id), (b) show the instructor's domain context, (c) keep all existing cohort metrics, misconceptions, intervention list, and step friction sections but filter data by the instructor's modules. Add a module selector dropdown if the instructor owns multiple modules.",
@@ -30,5 +30,5 @@
     "eval \"$(mise env)\" && cd /projects/sandbox/ClassAid && pnpm run build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All steps implemented successfully. Navigation user picker now uses dynamic users from context instead of static demoUsers import. The csModuleVersion export from seed.ts was already available. No test changes needed since all 56 existing tests pass."
 }
