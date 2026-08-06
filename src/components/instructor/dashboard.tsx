@@ -44,7 +44,7 @@ const moduleDataMap: Record<string, {
 const allModules: LearningModule[] = [learningModule, csModule];
 
 export function InstructorDashboard() {
-  const { currentUser } = useApp();
+  const { currentUser, enterPreviewMode } = useApp();
 
   // Filter to only modules owned by this instructor
   const ownedModules = allModules.filter((m) => m.ownerId === currentUser.id);
@@ -123,8 +123,18 @@ export function InstructorDashboard() {
 
       {/* Module title */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
-        <p className="text-sm text-slate-500">Currently viewing</p>
-        <p className="text-lg font-semibold text-slate-900">{metrics.moduleTitle}</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-slate-500">Currently viewing</p>
+            <p className="text-lg font-semibold text-slate-900">{metrics.moduleTitle}</p>
+          </div>
+          <button
+            onClick={() => enterPreviewMode(selectedModuleId)}
+            className="inline-flex items-center px-4 py-2 text-sm font-medium text-amber-800 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors"
+          >
+            &#x1F441; Preview as Learner
+          </button>
+        </div>
       </div>
 
       {/* Key metrics */}

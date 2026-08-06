@@ -46,6 +46,11 @@ interface AppState {
   approveCheckpoint: (checkpointId: string) => void;
   rejectCheckpoint: (checkpointId: string) => void;
   resetConfig: () => void;
+  // Preview mode (instructor simulating learner journey)
+  isPreviewMode: boolean;
+  previewModuleId: string | null;
+  enterPreviewMode: (moduleId: string) => void;
+  exitPreviewMode: () => void;
   // Demo controls
   resetDemo: () => void;
   hydrated: boolean;
@@ -112,6 +117,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const saved = loadUsers();
     return saved ?? [...demoUsers];
   });
+
+  // Preview mode state (not persisted - resets on refresh)
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [previewModuleId, setPreviewModuleId] = useState<string | null>(null);
 
   // Mark hydrated after first render (canonical hydration pattern)
   useEffect(() => { setHydrated(true); }, []);
@@ -255,6 +264,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const enterPreviewMode = useCallback((moduleId: string) => {
+    setIsPreviewMode(true);
+    setPreviewModuleId(moduleId);
+  }, []);
+
+  const exitPreviewMode = useCallback(() => {
+    setIsPreviewMode(false);
+    setPreviewModuleId(null);
+  }, []);
+
   const resetDemo = useCallback(() => {
     clearState();
     clearUsers();
@@ -267,6 +286,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setAssessmentSubmitted(false);
     setModuleConfig(getInitialConfig());
     setUsers([...demoUsers]);
+    setIsPreviewMode(false);
+    setPreviewModuleId(null);
   }, []);
 
   return (
@@ -299,6 +320,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         approveCheckpoint,
         rejectCheckpoint,
         resetConfig,
+        isPreviewMode,
+        previewModuleId,
+        enterPreviewMode,
+        exitPreviewMode,
         resetDemo,
         hydrated,
       }}

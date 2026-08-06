@@ -15,6 +15,7 @@ import { InstructorDashboard } from "./instructor/dashboard";
 import { ModuleConfig } from "./instructor/module-config";
 import { CheckpointApproval } from "./instructor/checkpoint-approval";
 import { ContentManagement } from "./instructor/content-management";
+import { LearnerPreview } from "./instructor/learner-preview";
 import { AdminRegistry } from "./admin/registry";
 import { UserManagement } from "./admin/user-management";
 
@@ -23,7 +24,7 @@ export type InstructorView = "insights" | "configure" | "checkpoints" | "content
 export type AdminView = "registry" | "users";
 
 export function MainRouter() {
-  const { role, assessmentSubmitted, readinessResult } = useApp();
+  const { role, assessmentSubmitted, readinessResult, isPreviewMode } = useApp();
   const { isDemo, user, isLoading } = useAuth();
   const [learnerView, setLearnerView] = useState<LearnerView>("dashboard");
   const [instructorView, setInstructorView] = useState<InstructorView>("insights");
@@ -58,6 +59,11 @@ export function MainRouter() {
   }
 
   if (role === "instructor") {
+    // If preview mode is active, render the learner preview
+    if (isPreviewMode) {
+      return <LearnerPreview />;
+    }
+
     return (
       <div className="space-y-4">
         {/* Instructor sub-navigation */}

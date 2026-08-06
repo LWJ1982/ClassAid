@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "feat",
   "description": "Add instructor learner-preview mode that lets an instructor simulate the learner journey for any of their modules. The instructor can enter a preview mode that shows the full learner experience (guided activities, AI coach, assessment) without affecting real learner data.",
-  "status": "pending",
+  "status": "in_progress",
   "steps": [
     "1. In src/lib/domain/types.ts, add a PreviewMode type or flag interface: { active: boolean; moduleId: string; instructorId: string }.",
     "2. In src/components/providers.tsx, add preview mode state: (a) isPreviewMode boolean, (b) previewModuleId string|null, (c) enterPreviewMode(moduleId: string) function, (d) exitPreviewMode() function. When preview mode is active, the learner components should render using the preview module's data. Preview mode state should be separate from the instructor's normal state.",
